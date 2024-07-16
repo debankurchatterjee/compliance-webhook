@@ -1,9 +1,7 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/compliance-webhook/internal/logutil/log"
 	"github.com/compliance-webhook/pkg/controller"
 	"io"
@@ -21,8 +19,8 @@ const (
 
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	var admissionReview admissionv1.AdmissionReview
-	ctx := context.Background()
-	logger := log.From(ctx)
+	ctx := r.Context()
+	logger := log.From(ctx).WithName("webhook-handler")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "could not read request body", http.StatusBadRequest)
@@ -34,7 +32,8 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 		logger.Error(err, "could not unmarshal request body", "status", http.StatusBadRequest)
 		return
 	}
-
+	//	bodyStr := string(body)
+	// logger.Info("message body", "BodyStr", bodyStr)
 	kind := admissionReview.Request.Kind.Kind
 	patchType := admissionv1.PatchTypeJSONPatch
 	// allow the Snow CR LCM operation
@@ -53,14 +52,14 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		admissionReview.Response, err = handleAdmissionRequest(ctx, admissionReview.Request, snowController, logger)
-		fmt.Println("Admission review response ", admissionReview.Response.Result)
+		admissionReview.Response, err = handleAdmissionRequest(ctx, admissionReview.Request, snowController)
 	}
 	responseBytes, err := json.Marshal(admissionReview)
 	if err != nil {
 		http.Error(w, "could not marshal response", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(responseBytes)
 	if err != nil {
 		return

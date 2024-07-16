@@ -1,0 +1,29 @@
+
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicas: 1
+image:
+  repository: debankur1
+  tag: v1.33
+
+webhook:
+  caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURSekNDQWkr
+  path: "/mutate"
+  name: "deployment.mutation.svc"
+  service:
+    namespace: kube-system
+    name: webhook-server
+
+secret:
+  name: webhook-server-tls
+  namespace: kube-system
+#  tls:
+#    crt: |
+#      -----BEGIN CERTIFICATE-----
+#      YOUR_CERTIFICATE_CONTENT
+#      -----END CERTIFICATE-----
+#    key: |
+#      -----BEGIN RSA PRIVATE KEY-----
+#      YOUR_PRIVATE_KEY_CONTENT
+#      -----END RSA PRIVATE KEY-----

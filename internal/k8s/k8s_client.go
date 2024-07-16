@@ -18,6 +18,7 @@ type KubernetesCustomResourceClient struct {
 }
 
 const snowLabel = "snow.controller/changeID"
+const snowNamespace = "snow-compliance"
 
 func NewKubernetesCustomResourceClient(inClusterConfig bool) (*KubernetesCustomResourceClient, error) {
 	var dynamicClient *dynamic.DynamicClient
@@ -47,15 +48,15 @@ func NewKubernetesCustomResourceClient(inClusterConfig bool) (*KubernetesCustomR
 }
 
 type KubernetesClient interface {
-	Get(ctx context.Context, name string, namespace string,
+	Get(ctx context.Context, label string, namespace string,
 		gvr schema.GroupVersionResource) (*unstructured.Unstructured, error)
 	Create(ctx context.Context, payload *unstructured.Unstructured,
 		gvr schema.GroupVersionResource) (*unstructured.Unstructured, error)
 }
 
-func (c *KubernetesCustomResourceClient) Get(ctx context.Context, name string, namespace string,
+func (c *KubernetesCustomResourceClient) Get(ctx context.Context, label string, namespace string,
 	gvr schema.GroupVersionResource) (*unstructured.Unstructured, error) {
-	labelSelector := fmt.Sprintf("%s=%s", snowLabel, name)
+	labelSelector := fmt.Sprintf("%s=%s", snowLabel, label)
 	list, err := c.DynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
@@ -63,7 +64,7 @@ func (c *KubernetesCustomResourceClient) Get(ctx context.Context, name string, n
 		return nil, err
 	}
 	if len(list.Items) == 0 {
-		return nil, fmt.Errorf("resource not found with label %s=%s", snowLabel, name)
+		return nil, fmt.Errorf("resource not found with label %s=%s", snowLabel, label)
 	}
 	return &list.Items[0], nil
 }
@@ -71,5 +72,10 @@ func (c *KubernetesCustomResourceClient) Get(ctx context.Context, name string, n
 func (c *KubernetesCustomResourceClient) Create(ctx context.Context,
 	payload *unstructured.Unstructured,
 	gvr schema.GroupVersionResource) (*unstructured.Unstructured, error) {
-	return c.DynamicClient.Resource(gvr).Create(ctx, payload, metav1.CreateOptions{})
+	client := c.DynamicClient.Resource(gvr).Namespace(snowNamespace)
+	create, err := client.Create(ctx, payload, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return create, nil
 }

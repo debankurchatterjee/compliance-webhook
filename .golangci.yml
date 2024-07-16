@@ -1,0 +1,53 @@
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+  lll:
+    line-length: 140
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - dupl
+    - gocyclo
+    - gofmt
+    - gosec
+    - unparam
+    - unconvert
+    - stylecheck
+    - prealloc
+    - nakedret
+    - misspell
+    - goconst
+    - gocritic
+    - staticcheck
+    - gosimple
+    - unused
+  fast: true
+run:
+  skip-dirs:
+    - simulator
+    - gen
+    - localdebug
+  skip-files:
+    - ".*/.*zz_generated.*\\.go"
+    - ".*/contrib/.*"
+    - ".*/.*_test\\.go"
+    - ".*/internal/log/log.go"
+  timeout: 30m
+  concurrency: 1
+issue:
+  max-same-issues: 0
+  max-per-linter: 0

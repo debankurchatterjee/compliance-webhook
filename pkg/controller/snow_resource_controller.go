@@ -2,7 +2,9 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"github.com/compliance-webhook/internal/k8s"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -27,8 +29,8 @@ func NewSnowResource(group, version, resource string, isInClusterConfig bool) (S
 }
 
 type SnowResourceController interface {
-	Get(ctx context.Context, name, namespace, operation string) (bool, error)
-	Create(ctx context.Context, name, namespace, operation string) error
+	Get(ctx context.Context, label, namespace, operation string) (bool, error)
+	Create(ctx context.Context, name, namespace, operation, kind, payload string) error
 	Update(ctx context.Context, name, namespace, operation string) error
 	Delete(ctx context.Context, name, namespace, operation string) error
 }
@@ -44,7 +46,10 @@ func (s SnowResource) Get(ctx context.Context, name, namespace, operation string
 	}
 	snowResource := obj.Object
 	if status, ok := snowResource["status"]; ok {
-		statusMap := status.(map[string]interface{})
+		statusMap, ok := status.(map[string]interface{})
+		if !ok {
+			return false, fmt.Errorf("unable to parse status subresource from cr")
+		}
 		if val, ok1 := statusMap["OverallStatus"]; ok1 && val == "APPROVED" {
 			return true, nil
 		}
@@ -52,17 +57,35 @@ func (s SnowResource) Get(ctx context.Context, name, namespace, operation string
 	return false, err
 }
 
-func (s SnowResource) Create(ctx context.Context, name, namespace, operation string) error {
-	//TODO implement me
-	panic("implement me")
+func (s SnowResource) Create(ctx context.Context, name, namespace, operation, kind, payload string) error {
+	obj := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": fmt.Sprintf("%s/%s", s.Group, s.Version),
+			"kind":       "Snow",
+			"metadata": map[string]interface{}{
+				"name": name,
+			},
+			"spec": map[string]interface{}{
+				"operation":  operation,
+				"changeName": name,
+				"namespace":  namespace,
+				"kind":       kind,
+				"payload":    payload,
+			},
+		},
+	}
+	_, err := s.DynamicKubernetesClient.Create(ctx, &obj, schema.GroupVersionResource{
+		Group:    s.Group,
+		Version:  s.Version,
+		Resource: s.Resource,
+	})
+	return err
 }
 
 func (s SnowResource) Update(ctx context.Context, name, namespace, operation string) error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (s SnowResource) Delete(ctx context.Context, name, namespace, operation string) error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }

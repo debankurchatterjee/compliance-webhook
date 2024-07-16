@@ -1,0 +1,184 @@
+{
+  "kind": "AdmissionReview",
+  "apiVersion": "admission.k8s.io/v1",
+  "request": {
+    "uid": "a0cee954-854e-46a1-b1ac-783ac62e6826",
+    "kind": {
+      "group": "apps",
+      "version": "v1",
+      "kind": "ReplicaSet"
+    },
+    "resource": {
+      "group": "apps",
+      "version": "v1",
+      "resource": "replicasets"
+    },
+    "requestKind": {
+      "group": "apps",
+      "version": "v1",
+      "kind": "ReplicaSet"
+    },
+    "requestResource": {
+      "group": "apps",
+      "version": "v1",
+      "resource": "replicasets"
+    },
+    "name": "nginx-app-cbdccf466",
+    "namespace": "test",
+    "operation": "CREATE",
+    "userInfo": {
+      "username": "system:serviceaccount:kube-system:deployment-controller",
+      "uid": "95a28901-ca7a-4c84-84d1-1498ec159465",
+      "groups": [
+        "system:serviceaccounts",
+        "system:serviceaccounts:kube-system",
+        "system:authenticated"
+      ]
+    },
+    "object": {
+      "kind": "ReplicaSet",
+      "apiVersion": "apps/v1",
+      "metadata": {
+        "name": "nginx-app-cbdccf466",
+        "namespace": "test",
+        "creationTimestamp": null,
+        "labels": {
+          "app": "nginx",
+          "pod-template-hash": "cbdccf466"
+        },
+        "annotations": {
+          "deployment.kubernetes.io/desired-replicas": "1",
+          "deployment.kubernetes.io/max-replicas": "2",
+          "deployment.kubernetes.io/revision": "1"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "name": "nginx-app",
+            "uid": "fe768b9d-011f-46a0-ac74-6b0256c6acf6",
+            "controller": true,
+            "blockOwnerDeletion": true
+          }
+        ],
+        "managedFields": [
+          {
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "apiVersion": "apps/v1",
+            "time": "2024-07-14T20:25:52Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  ".": {},
+                  "f:deployment.kubernetes.io/desired-replicas": {},
+                  "f:deployment.kubernetes.io/max-replicas": {},
+                  "f:deployment.kubernetes.io/revision": {}
+                },
+                "f:labels": {
+                  ".": {},
+                  "f:app": {},
+                  "f:pod-template-hash": {}
+                },
+                "f:ownerReferences": {
+                  ".": {},
+                  "k:{\"uid\":\"fe768b9d-011f-46a0-ac74-6b0256c6acf6\"}": {}
+                }
+              },
+              "f:spec": {
+                "f:replicas": {},
+                "f:selector": {},
+                "f:template": {
+                  "f:metadata": {
+                    "f:labels": {
+                      ".": {},
+                      "f:app": {},
+                      "f:pod-template-hash": {}
+                    }
+                  },
+                  "f:spec": {
+                    "f:containers": {
+                      "k:{\"name\":\"nginx\"}": {
+                        ".": {},
+                        "f:image": {},
+                        "f:imagePullPolicy": {},
+                        "f:name": {},
+                        "f:ports": {
+                          ".": {},
+                          "k:{\"containerPort\":80,\"protocol\":\"TCP\"}": {
+                            ".": {},
+                            "f:containerPort": {},
+                            "f:protocol": {}
+                          }
+                        },
+                        "f:resources": {},
+                        "f:terminationMessagePath": {},
+                        "f:terminationMessagePolicy": {}
+                      }
+                    },
+                    "f:dnsPolicy": {},
+                    "f:restartPolicy": {},
+                    "f:schedulerName": {},
+                    "f:securityContext": {},
+                    "f:terminationGracePeriodSeconds": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "app": "nginx",
+            "pod-template-hash": "cbdccf466"
+          }
+        },
+        "template": {
+          "metadata": {
+            "creationTimestamp": null,
+            "labels": {
+              "app": "nginx",
+              "pod-template-hash": "cbdccf466"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "nginx",
+                "image": "nginx:1.14.2",
+                "ports": [
+                  {
+                    "containerPort": 80,
+                    "protocol": "TCP"
+                  }
+                ],
+                "resources": {},
+                "terminationMessagePath": "/dev/termination-log",
+                "terminationMessagePolicy": "File",
+                "imagePullPolicy": "IfNotPresent"
+              }
+            ],
+            "restartPolicy": "Always",
+            "terminationGracePeriodSeconds": 30,
+            "dnsPolicy": "ClusterFirst",
+            "securityContext": {},
+            "schedulerName": "default-scheduler"
+          }
+        }
+      },
+      "status": {
+        "replicas": 0
+      }
+    },
+    "oldObject": null,
+    "dryRun": false,
+    "options": {
+      "kind": "CreateOptions",
+      "apiVersion": "meta.k8s.io/v1"
+    }
+  }
+}
