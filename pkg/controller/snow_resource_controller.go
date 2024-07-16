@@ -29,13 +29,13 @@ func NewSnowResource(group, version, resource string, isInClusterConfig bool) (S
 }
 
 type SnowResourceController interface {
-	Get(ctx context.Context, label, namespace, operation string) (bool, error)
+	Get(ctx context.Context, label, namespace, operation string, bypassStatusCheck bool) (bool, error)
 	Create(ctx context.Context, name, namespace, operation, kind, payload string) error
 	Update(ctx context.Context, name, namespace, operation string) error
 	Delete(ctx context.Context, name, namespace, operation string) error
 }
 
-func (s SnowResource) Get(ctx context.Context, name, namespace, operation string) (bool, error) {
+func (s SnowResource) Get(ctx context.Context, name, namespace, operation string, bypassStatusCheck bool) (bool, error) {
 	obj, err := s.DynamicKubernetesClient.Get(ctx, name, "", schema.GroupVersionResource{
 		Group:    s.Group,
 		Version:  s.Version,
@@ -43,6 +43,9 @@ func (s SnowResource) Get(ctx context.Context, name, namespace, operation string
 	})
 	if err != nil {
 		return false, err
+	}
+	if bypassStatusCheck && obj != nil {
+		return true, nil
 	}
 	snowResource := obj.Object
 	if status, ok := snowResource["status"]; ok {

@@ -55,7 +55,7 @@ func operationHandler(ctx context.Context,
 			}
 		}
 	}
-	result, err := resource.Get(ctx, changeIDStr, req.Namespace, operation)
+	result, err := resource.Get(ctx, changeIDStr, req.Namespace, operation, true)
 	if err != nil {
 		if errors.IsNotFound(err) || !result {
 			logger.Error(err, "unable to find service now request for the change")
