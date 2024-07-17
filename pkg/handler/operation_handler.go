@@ -79,8 +79,11 @@ func operationHandler(ctx context.Context,
 			if err != nil {
 				return nil, err
 			}
-			err = resource.Create(ctx, req.Name, req.Namespace, operation, req.Kind.Kind, string(payloadYAML))
+			labels := make(map[string]string)
+			labels["snow.controller/changeID"] = changeIDStr
+			err = resource.Create(ctx, req.Name, req.Namespace, operation, req.Kind.Kind, string(payloadYAML), labels)
 			if err != nil {
+
 				logger.Error(err, "unable to create the service now request for the given change")
 				return &admissionv1.AdmissionResponse{
 					Allowed: false,

@@ -10,12 +10,3 @@ image:
 secret:
   name: webhook-server-tls
   namespace: kube-system
-#  tls:
-#    crt: |
-#      -----BEGIN CERTIFICATE-----
-#      YOUR_CERTIFICATE_CONTENT
-#      -----END CERTIFICATE-----
-#    key: |
-#      -----BEGIN RSA PRIVATE KEY-----
-#      YOUR_PRIVATE_KEY_CONTENT
-#      -----END RSA PRIVATE KEY-----

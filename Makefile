@@ -1,6 +1,6 @@
 APP_NAME ?= webhook-server
 REGISTRY ?= debankur1
-TAG ?= v1.54
+TAG ?= v1.59
 WEBHOOK_SERVER_MANIFEST ?= manifests/webhook_server.yaml
 MUTATING_WEBHOOK ?= manifests/webhooks.yaml
 ENCODED_CA ?=""
@@ -63,6 +63,13 @@ helm-install-bkp : generate-tls-certs docker-build
 	@$(eval ENCODED_CA=$(shell cat certs/tls.crt | base64 | tr -d '\n' | sed 's/\"//g'))
 	helm install compliance-webhook helm/compliance-webhook --set image.tag=$(TAG) --set secret.tls.crt="$(shell cat $(CERT_OUT) | base64 | tr -d '\n')" --set secret.tls.key="$(shell cat $(CERT_KEY) | base64 | tr -d '\n')" --set webhook.caBundle=$(ENCODED_CA) -n kube-system
 
+clean:
+	rm -rf bin certs
+	$(MAKE) helm-uninstall
+
+clean-install:
+	$(MAKE) clean
+	$(MAKE) helm-install
 
 helm-uninstall:
 	kubectl delete secret webhook-server-tls -n $(WEBHOOK_SERVER_NAMESPACE)

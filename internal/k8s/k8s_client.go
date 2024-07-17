@@ -3,6 +3,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"github.com/compliance-webhook/internal/logutil/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -56,8 +57,10 @@ type KubernetesClient interface {
 
 func (c *KubernetesCustomResourceClient) Get(ctx context.Context, label string, namespace string,
 	gvr schema.GroupVersionResource) (*unstructured.Unstructured, error) {
+	logger := log.From(ctx)
+	logger.Info("context labels", "Label", label)
 	labelSelector := fmt.Sprintf("%s=%s", snowLabel, label)
-	list, err := c.DynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{
+	list, err := c.DynamicClient.Resource(gvr).Namespace(snowNamespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 	if err != nil {

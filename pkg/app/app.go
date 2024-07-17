@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"flag"
+	"fmt"
 	"github.com/compliance-webhook/internal/logutil/log"
 	"github.com/compliance-webhook/pkg/handler"
 	"net/http"
@@ -13,11 +14,14 @@ import (
 	"time"
 )
 
+const securePort = "8443"
+const unSecurePort = "8001"
+
 func RunUnsecure(ctx context.Context) {
 	http.HandleFunc("/mutate", handler.WebhookHandler)
 	logger := log.From(ctx).WithName("webhook-server")
 	server := &http.Server{
-		Addr: ":8001",
+		Addr: fmt.Sprintf(":%s", unSecurePort),
 	}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
@@ -46,7 +50,7 @@ func Run(ctx context.Context) {
 	http.HandleFunc("/mutate", handler.WebhookHandler)
 	logger := log.From(ctx).WithName("webhook-server")
 	server := &http.Server{
-		Addr: ":8443",
+		Addr: fmt.Sprintf(":%s", securePort),
 		TLSConfig: &tls.Config{
 			MinVersion: tls.VersionTLS12,
 		},

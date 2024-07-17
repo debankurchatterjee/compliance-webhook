@@ -30,13 +30,13 @@ func NewSnowResource(group, version, resource string, isInClusterConfig bool) (S
 
 type SnowResourceController interface {
 	Get(ctx context.Context, label, namespace, operation string, bypassStatusCheck bool) (bool, error)
-	Create(ctx context.Context, name, namespace, operation, kind, payload string) error
+	Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string) error
 	Update(ctx context.Context, name, namespace, operation string) error
 	Delete(ctx context.Context, name, namespace, operation string) error
 }
 
-func (s SnowResource) Get(ctx context.Context, name, namespace, operation string, bypassStatusCheck bool) (bool, error) {
-	obj, err := s.DynamicKubernetesClient.Get(ctx, name, "", schema.GroupVersionResource{
+func (s SnowResource) Get(ctx context.Context, label, namespace, operation string, bypassStatusCheck bool) (bool, error) {
+	obj, err := s.DynamicKubernetesClient.Get(ctx, label, "", schema.GroupVersionResource{
 		Group:    s.Group,
 		Version:  s.Version,
 		Resource: s.Resource,
@@ -60,13 +60,13 @@ func (s SnowResource) Get(ctx context.Context, name, namespace, operation string
 	return false, err
 }
 
-func (s SnowResource) Create(ctx context.Context, name, namespace, operation, kind, payload string) error {
+func (s SnowResource) Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string) error {
 	obj := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", s.Group, s.Version),
 			"kind":       "Snow",
 			"metadata": map[string]interface{}{
-				"name": name,
+				"name": fmt.Sprintf("%s-%s", name, namespace),
 			},
 			"spec": map[string]interface{}{
 				"operation":  operation,
@@ -77,6 +77,7 @@ func (s SnowResource) Create(ctx context.Context, name, namespace, operation, ki
 			},
 		},
 	}
+	obj.SetLabels(labels)
 	_, err := s.DynamicKubernetesClient.Create(ctx, &obj, schema.GroupVersionResource{
 		Group:    s.Group,
 		Version:  s.Version,
