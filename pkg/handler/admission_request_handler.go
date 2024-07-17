@@ -22,10 +22,11 @@ func handleAdmissionRequest(ctx context.Context,
 	kind := req.Kind.Kind
 	namespace := req.Namespace
 	// Verify the object has owner reference for e.g. like ReplicaSet or StatefulSets can have owner ref to Deployment
-	ownerReferences, err := k8s.FindOwnerReferenceFromRawObject(req.Object.Raw)
+	ownerReferences, err := k8s.FindOwnerReferenceFromRawObject(req)
 	if err != nil {
 		return nil, err
 	}
+	logger.Info("owner reference of the request", "OwnerReference", ownerReferences)
 	logger.Info("handling operation", "Operation",
 		req.Operation, "Kind", req.Kind.Kind,
 		"ChangeName", name,
@@ -35,6 +36,8 @@ func handleAdmissionRequest(ctx context.Context,
 		return operationHandler(ctx, req, resource, name, "create", namespace, kind, ownerReferences, logger)
 	case admissionv1.Update:
 		return operationHandler(ctx, req, resource, name, "update", namespace, kind, ownerReferences, logger)
+	case admissionv1.Delete:
+		return operationHandler(ctx, req, resource, name, "delete", namespace, kind, ownerReferences, logger)
 	default:
 		return &admissionv1.AdmissionResponse{
 			Allowed: false,
@@ -54,6 +57,7 @@ func isOwnerApproved(ctx context.Context,
 	changeStr := fmt.Sprintf("%s-%s-%s-%s", name, operation, namespace, kind)
 	changeID := md5.Sum([]byte(changeStr))
 	OwnerChangeIDStr := hex.EncodeToString(changeID[:])
+	logger.Info("change for owner request", "Name", name, "Operation", operation, "Namespace", namespace, "Kind", kind)
 	logger.Info("change id for the parent request", "ChangeID", OwnerChangeIDStr)
 	return resource.Get(ctx, OwnerChangeIDStr, "", operation, true)
 }

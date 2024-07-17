@@ -65,14 +65,6 @@ func Run(ctx context.Context) {
 		flag.StringVar(&tlsKey, "tlsKey", "/certs/tls.key", "Path to the TLS key")
 		flag.StringVar(&tlsCert, "tlsCert", "/certs/tls.crt", "Path to the TLS certificate")
 		logger.Info("starting webhook server")
-		//decodeString1, err := base64.StdEncoding.DecodeString(tlsKey)
-		//if err != nil {
-		//	return
-		//}
-		//decodeString2, err := base64.StdEncoding.DecodeString(tlsCert)
-		//if err != nil {
-		//	return
-		//}
 		err := server.ListenAndServeTLS(tlsCert, tlsKey)
 		if err != nil {
 			logger.Error(err, "failed to start webhook server")

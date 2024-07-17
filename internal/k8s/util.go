@@ -3,11 +3,21 @@ package k8s
 import (
 	"encoding/json"
 	"fmt"
+	admissionv1 "k8s.io/api/admission/v1"
 )
 
-func FindOwnerReferenceFromRawObject(req []byte) ([]interface{}, error) {
+func FindOwnerReferenceFromRawObject(req *admissionv1.AdmissionRequest) ([]interface{}, error) {
+	if req == nil {
+		return []interface{}{}, nil
+	}
+	var obj []byte
+	if req.Operation == admissionv1.Delete {
+		obj = req.OldObject.Raw
+	} else {
+		obj = req.Object.Raw
+	}
 	rawObj := make(map[string]interface{})
-	if err := json.Unmarshal(req, &rawObj); err != nil {
+	if err := json.Unmarshal(obj, &rawObj); err != nil {
 		return nil, fmt.Errorf("could not unmarshal raw object: %v", err)
 	}
 	metadata, ok := rawObj["metadata"].(map[string]interface{})

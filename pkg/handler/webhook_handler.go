@@ -32,8 +32,8 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 		logger.Error(err, "could not unmarshal request body", "status", http.StatusBadRequest)
 		return
 	}
-	//	bodyStr := string(body)
-	// logger.Info("message body", "BodyStr", bodyStr)
+	bodyStr := string(body)
+	logger.Info("message body", "BodyStr", bodyStr)
 	kind := admissionReview.Request.Kind.Kind
 	patchType := admissionv1.PatchTypeJSONPatch
 	// allow the Snow CR LCM operation

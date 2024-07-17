@@ -66,7 +66,7 @@ func (s SnowResource) Create(ctx context.Context, name, namespace, operation, ki
 			"apiVersion": fmt.Sprintf("%s/%s", s.Group, s.Version),
 			"kind":       "Snow",
 			"metadata": map[string]interface{}{
-				"name": fmt.Sprintf("%s-%s", name, namespace),
+				"name": fmt.Sprintf("%s-%s-%s", name, namespace, operation),
 			},
 			"spec": map[string]interface{}{
 				"operation":  operation,
