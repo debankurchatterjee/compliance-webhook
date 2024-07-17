@@ -54,6 +54,6 @@ func isOwnerApproved(ctx context.Context,
 	changeStr := fmt.Sprintf("%s-%s-%s-%s", name, operation, namespace, kind)
 	changeID := md5.Sum([]byte(changeStr))
 	OwnerChangeIDStr := hex.EncodeToString(changeID[:])
-	logger.Info("change id for the parent request", "ChangeID", changeStr)
+	logger.Info("change id for the parent request", "ChangeID", OwnerChangeIDStr)
 	return resource.Get(ctx, OwnerChangeIDStr, "", operation, true)
 }

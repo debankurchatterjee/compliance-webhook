@@ -1,0 +1,10 @@
+
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+webhook:
+  caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURSekNDQWkr
+  path: "/mutate"
+  name: "deployment.mutation.svc"
+  service:
+    namespace: kube-system
+    name: webhook-server

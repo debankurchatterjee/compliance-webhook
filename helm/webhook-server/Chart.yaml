@@ -1,6 +1,6 @@
 apiVersion: v2
 name: webhook-server
-description: A Helm chart for Kubernetes to deploy compliance-webhook
+description: A Helm chart for Kubernetes to deploy webhook-server
 
 # A chart can be either an 'application' or a 'library' chart.
 #

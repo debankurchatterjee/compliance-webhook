@@ -12,8 +12,8 @@ webhooks:
         scope: "Namespaced"
     clientConfig:
       service:
-        namespace: "{{ .Release.Namespace }}"
-        name: "{{ .Chart.Name }}"
+        namespace: "{{ .Values.webhook.service.namespace }}"
+        name: "{{ .Values.webhook.service.name }}"
         path: "{{ .Values.webhook.path }}"
       caBundle: "{{ .Values.webhook.caBundle }}"
     admissionReviewVersions: ["v1"]
