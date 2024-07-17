@@ -10,8 +10,9 @@ import (
 	"github.com/compliance-webhook/pkg/controller"
 	"github.com/go-logr/logr"
 	admissionv1 "k8s.io/api/admission/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var OperationHandlerFactory operationHandlerFactory = &admissionOperationHandler{}
 
 func handleAdmissionRequest(ctx context.Context,
 	req *admissionv1.AdmissionRequest,
@@ -31,22 +32,8 @@ func handleAdmissionRequest(ctx context.Context,
 		req.Operation, "Kind", req.Kind.Kind,
 		"ChangeName", name,
 		"Namespace", namespace)
-	switch req.Operation {
-	case admissionv1.Create:
-		return operationHandler(ctx, req, resource, name, "create", namespace, kind, ownerReferences, logger)
-	case admissionv1.Update:
-		return operationHandler(ctx, req, resource, name, "update", namespace, kind, ownerReferences, logger)
-	case admissionv1.Delete:
-		return operationHandler(ctx, req, resource, name, "delete", namespace, kind, ownerReferences, logger)
-	default:
-		return &admissionv1.AdmissionResponse{
-			Allowed: false,
-			Result: &metav1.Status{
-				Message: "Unsupported operation",
-			},
-		}, nil
-	}
-	return nil, nil
+
+	return OperationHandlerFactory.handle(ctx, req, &req.Operation, resource, name, namespace, kind, ownerReferences, logger)
 }
 func isOwnerApproved(ctx context.Context,
 	kind,

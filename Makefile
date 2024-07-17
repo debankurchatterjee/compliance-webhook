@@ -1,6 +1,6 @@
 APP_NAME ?= webhook-server
 REGISTRY ?= debankur1
-TAG ?= v1.67
+TAG ?= v1.79
 WEBHOOK_SERVER_MANIFEST ?= manifests/webhook_server.yaml
 MUTATING_WEBHOOK ?= manifests/webhooks.yaml
 ENCODED_CA ?=""

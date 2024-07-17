@@ -14,18 +14,23 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"sigs.k8s.io/yaml"
+	"strings"
 )
 
-type admissionHandler struct {
+type admissionOperationHandler struct {
 }
 
 type operationHandlerFactory interface {
-	handle(ctx context.Context, operation *admissionv1.Operation, resource controller.SnowResource, name, namespace, kind string,
+	handle(ctx context.Context, req *admissionv1.AdmissionRequest, operation *admissionv1.Operation, resource controller.SnowResource, name, namespace, kind string,
 		ownerReferences []interface{}, logger logr.Logger) (*admissionv1.AdmissionResponse, error)
 }
 
-// operationHandler will handle the create request
-func operationHandler(ctx context.Context,
+func (a admissionOperationHandler) handle(ctx context.Context, req *admissionv1.AdmissionRequest, operation *admissionv1.Operation, resource controller.SnowResource, name, namespace, kind string, ownerReferences []interface{}, logger logr.Logger) (*admissionv1.AdmissionResponse, error) {
+	return operationHandlerImpl(ctx, req, resource, name, strings.ToLower(string(*operation)), namespace, kind, ownerReferences, logger)
+}
+
+// operationHandlerImpl will handle operations create,update and delete
+func operationHandlerImpl(ctx context.Context,
 	req *admissionv1.AdmissionRequest,
 	resource controller.SnowResource,
 	name, operation, namespace, kind string,
@@ -40,9 +45,14 @@ func operationHandler(ctx context.Context,
 	case "create":
 		return getAndCreateOperationCR(ctx, req, "create", changeIDStr, namespace, true, false, logger, resource, ownerReferences)
 	case "delete":
-		return getAndCreateOperationCR(ctx, req, "delete", changeIDStr, namespace, true, true, logger, resource, ownerReferences)
+		return getAndCreateOperationCR(ctx, req, "delete", changeIDStr, namespace, true, false, logger, resource, ownerReferences)
 	}
-	return nil, nil
+	return &admissionv1.AdmissionResponse{
+		Allowed: false,
+		Result: &metav1.Status{
+			Message: "Unsupported operation",
+		},
+	}, nil
 }
 
 func getAndCreateOperationCR(ctx context.Context, req *admissionv1.AdmissionRequest, operation, changeIDStr, namespace string, byPassStatusCheck bool, byPassPayloadInjection bool, logger logr.Logger, resource controller.SnowResource, ownerReferences []interface{}) (*admissionv1.AdmissionResponse, error) {
@@ -74,11 +84,16 @@ func getAndCreateOperationCR(ctx context.Context, req *admissionv1.AdmissionRequ
 			// bypass payload injection for Delete operation
 			if !byPassPayloadInjection {
 				reqData := make(map[string]interface{})
-				err := json.Unmarshal(req.Object.Raw, &reqData)
+				var rawRequestData []byte
+				if req.Operation == admissionv1.Delete {
+					rawRequestData = req.OldObject.Raw
+				} else {
+					rawRequestData = req.Object.Raw
+				}
+				err := json.Unmarshal(rawRequestData, &reqData)
 				if err != nil {
 					return nil, err
 				}
-				rawRequestData := req.Object.Raw
 				metadata, ok := reqData["metadata"].(map[string]interface{})
 				if ok {
 					annotations, ok := metadata["annotations"].(map[string]interface{})
