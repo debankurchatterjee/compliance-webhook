@@ -18,10 +18,13 @@ const securePort = "8443"
 const unSecurePort = "8001"
 
 func RunUnsecure(ctx context.Context) {
-	http.HandleFunc("/mutate", handler.WebhookHandler)
+	http.HandleFunc("/validate", handler.WebhookHandler)
 	logger := log.From(ctx).WithName("webhook-server")
 	server := &http.Server{
-		Addr: fmt.Sprintf(":%s", unSecurePort),
+		Addr:         fmt.Sprintf(":%s", unSecurePort),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  15 * time.Second,
 	}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
@@ -47,7 +50,7 @@ func RunUnsecure(ctx context.Context) {
 }
 
 func Run(ctx context.Context) {
-	http.HandleFunc("/mutate", handler.WebhookHandler)
+	http.HandleFunc("/validate", handler.WebhookHandler)
 	logger := log.From(ctx).WithName("webhook-server")
 	server := &http.Server{
 		Addr: fmt.Sprintf(":%s", securePort),

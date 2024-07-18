@@ -29,44 +29,61 @@ func NewSnowResource(group, version, resource string, isInClusterConfig bool) (S
 }
 
 type SnowResourceController interface {
-	Get(ctx context.Context, label, namespace, operation string, bypassStatusCheck bool) (bool, error)
-	Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string) error
+	Get(ctx context.Context, label, namespace, operation string, bypassStatusCheck bool) (string, bool, error)
+	Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string, generateName bool) error
 	Update(ctx context.Context, name, namespace, operation string) error
 	Delete(ctx context.Context, name, namespace, operation string) error
 }
 
-func (s SnowResource) Get(ctx context.Context, label, namespace, operation string, bypassStatusCheck bool) (bool, error) {
-	obj, err := s.DynamicKubernetesClient.Get(ctx, label, "", schema.GroupVersionResource{
-		Group:    s.Group,
-		Version:  s.Version,
-		Resource: s.Resource,
-	})
+func (s SnowResource) Get(ctx context.Context, label, namespace, operation string, bypassStatusCheck bool) (string, bool, error) {
+	var obj *unstructured.Unstructured
+	var err error
+	if operation == "update" {
+		obj, err = s.DynamicKubernetesClient.GetLatest(ctx, label, "", schema.GroupVersionResource{
+			Group:    s.Group,
+			Version:  s.Version,
+			Resource: s.Resource,
+		})
+	} else {
+		obj, err = s.DynamicKubernetesClient.Get(ctx, label, "", schema.GroupVersionResource{
+			Group:    s.Group,
+			Version:  s.Version,
+			Resource: s.Resource,
+		})
+	}
 	if err != nil {
-		return false, err
+		return "", false, err
 	}
 	if bypassStatusCheck && obj != nil {
-		return true, nil
+		return obj.GetName(), true, nil
 	}
 	snowResource := obj.Object
 	if status, ok := snowResource["status"]; ok {
 		statusMap, ok := status.(map[string]interface{})
 		if !ok {
-			return false, fmt.Errorf("unable to parse status subresource from cr")
+			return "", false, fmt.Errorf("unable to parse status subresource from cr")
 		}
 		if val, ok1 := statusMap["OverallStatus"]; ok1 && val == "APPROVED" {
-			return true, nil
+			return obj.GetName(), true, nil
 		}
 	}
-	return false, err
+	return "", false, err
 }
 
-func (s SnowResource) Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string) error {
+func (s SnowResource) Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string, generateName bool) error {
+	createName := fmt.Sprintf("%s-%s-%s", name, namespace, operation)
+	if operation == "update" {
+		createName = fmt.Sprintf("%s-1", createName)
+	}
+	if !generateName {
+		createName = name
+	}
 	obj := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", s.Group, s.Version),
 			"kind":       "Snow",
 			"metadata": map[string]interface{}{
-				"name": fmt.Sprintf("%s-%s-%s", name, namespace, operation),
+				"name": createName,
 			},
 			"spec": map[string]interface{}{
 				"operation":  operation,

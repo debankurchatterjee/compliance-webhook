@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 webhook:
   caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURSekNDQWkr
-  path: "/mutate"
+  path: "/validate"
   name: "deployment.mutation.svc"
   service:
     namespace: kube-system

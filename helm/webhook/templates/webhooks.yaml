@@ -5,7 +5,7 @@ metadata:
 webhooks:
   - name: "{{ .Values.webhook.name }}"
     rules:
-      - operations: ["CREATE","DELETE"]
+      - operations: ["CREATE","DELETE","UPDATE"]
         apiGroups: [ "apps" ]
         apiVersions: [ "v1" ]
         resources: [ "*" ]

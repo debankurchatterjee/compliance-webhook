@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"sigs.k8s.io/yaml"
+	"strconv"
 	"strings"
 )
 
@@ -46,6 +47,8 @@ func operationHandlerImpl(ctx context.Context,
 		return getAndCreateOperationCR(ctx, req, "create", changeIDStr, namespace, true, false, logger, resource, ownerReferences)
 	case "delete":
 		return getAndCreateOperationCR(ctx, req, "delete", changeIDStr, namespace, true, false, logger, resource, ownerReferences)
+	case "update":
+		return getAndCreateOperationCR(ctx, req, "update", changeIDStr, namespace, true, false, logger, resource, ownerReferences)
 	}
 	return &admissionv1.AdmissionResponse{
 		Allowed: false,
@@ -55,7 +58,7 @@ func operationHandlerImpl(ctx context.Context,
 	}, nil
 }
 
-func getAndCreateOperationCR(ctx context.Context, req *admissionv1.AdmissionRequest, operation, changeIDStr, namespace string, byPassStatusCheck bool, byPassPayloadInjection bool, logger logr.Logger, resource controller.SnowResource, ownerReferences []interface{}) (*admissionv1.AdmissionResponse, error) {
+func getAndCreateOperationCR(ctx context.Context, req *admissionv1.AdmissionRequest, operation, changeIDStr, namespace string, byPassStatusCheck, byPassPayloadInjection bool, logger logr.Logger, resource controller.SnowResource, ownerReferences []interface{}) (*admissionv1.AdmissionResponse, error) {
 	if len(ownerReferences) > 0 {
 		ownRefs := k8s.ParseOwnerReference(ownerReferences)[0]
 		logger.Info("found owner reference", "Name", ownRefs[1], "Kind", ownRefs[0], "Namespace", namespace)
@@ -76,62 +79,36 @@ func getAndCreateOperationCR(ctx context.Context, req *admissionv1.AdmissionRequ
 			}, nil
 		}
 	}
-	result, err := resource.Get(ctx, changeIDStr, req.Namespace, operation, byPassStatusCheck)
+	name, result, err := resource.Get(ctx, changeIDStr, req.Namespace, operation, byPassStatusCheck)
 	if err != nil {
 		if errors.IsNotFound(err) || !result {
-			var payloadYAML = []byte{}
 			logger.Error(err, "unable to find service now request for the change")
-			// bypass payload injection for Delete operation
-			if !byPassPayloadInjection {
-				reqData := make(map[string]interface{})
-				var rawRequestData []byte
-				if req.Operation == admissionv1.Delete {
-					rawRequestData = req.OldObject.Raw
-				} else {
-					rawRequestData = req.Object.Raw
-				}
-				err := json.Unmarshal(rawRequestData, &reqData)
-				if err != nil {
-					return nil, err
-				}
-				metadata, ok := reqData["metadata"].(map[string]interface{})
-				if ok {
-					annotations, ok := metadata["annotations"].(map[string]interface{})
-					if ok {
-						appliedConfig, ok := annotations["kubectl.kubernetes.io/last-applied-configuration"].(string)
-						if ok {
-							rawRequestData = []byte(appliedConfig)
-						}
-					}
-				}
-				payloadYAML, err = yaml.JSONToYAML(rawRequestData)
-				if err != nil {
-					return nil, err
-				}
+			parentChangeID := ""
+			if operation == "update" {
+				parentChangeID = changeIDStr
 			}
-			labels := make(map[string]string)
-			labels["snow.controller/changeID"] = changeIDStr
-			err = resource.Create(ctx, req.Name, req.Namespace, operation, req.Kind.Kind, string(payloadYAML), labels)
-			if err != nil {
-				logger.Error(err, "unable to create the service now request for the given change")
-				return &admissionv1.AdmissionResponse{
-					Allowed: false,
-					Result: &metav1.Status{
-						Message: fmt.Sprintf("unable to create the snow request for the given CR,"+
-							"please try creating manually %v", err),
-					},
-				}, nil
-			} else {
-				return &admissionv1.AdmissionResponse{
-					Allowed: true,
-					UID:     req.UID,
-					Result: &metav1.Status{
-						Code:    http.StatusOK,
-						Message: "request accepted and corresponding service now request has been created",
-					},
-				}, nil
-			}
+			return createCR(ctx, req, operation, changeIDStr, parentChangeID, req.Name, byPassPayloadInjection, logger, resource, true)
 		}
+	}
+	if req.Operation == admissionv1.Update && name != "" {
+		logger.Info("current name", "Name", name)
+		res := strings.Split(name, "-")
+		revision := res[len(res)-1]
+		revisionNum, err := strconv.Atoi(revision)
+		if err != nil {
+			name = fmt.Sprintf("%s-%d", name, 1)
+			logger.Info("current name with no revision", "Name", name)
+		} else {
+			revisionNum = revisionNum + 1
+			res[len(res)-1] = fmt.Sprintf("%d", revisionNum)
+			name = strings.Join(res, "-")
+			logger.Info("current name with updated revision", "Name", name)
+		}
+		parentChangeID := changeIDStr
+		changeID := md5.Sum([]byte(name))
+		changeIDStr = hex.EncodeToString(changeID[:])
+		logger.Info("change id for given request", "ChangeID", changeIDStr)
+		return createCR(ctx, req, operation, changeIDStr, parentChangeID, name, byPassPayloadInjection, logger, resource, false)
 	}
 	return &admissionv1.AdmissionResponse{
 		Allowed: true,
@@ -141,4 +118,61 @@ func getAndCreateOperationCR(ctx context.Context, req *admissionv1.AdmissionRequ
 			Message: "request accepted",
 		},
 	}, nil
+}
+
+func createCR(ctx context.Context, req *admissionv1.AdmissionRequest, operation, changeIDStr, parentChangeID, name string, byPassPayloadInjection bool, logger logr.Logger, resource controller.SnowResource, generateName bool) (*admissionv1.AdmissionResponse, error) {
+	var payloadYAML = []byte{}
+	// bypass payload injection for Delete operation
+	if !byPassPayloadInjection {
+		reqData := make(map[string]interface{})
+		var rawRequestData []byte
+		if req.Operation == admissionv1.Delete {
+			rawRequestData = req.OldObject.Raw
+		} else {
+			rawRequestData = req.Object.Raw
+		}
+		err := json.Unmarshal(rawRequestData, &reqData)
+		if err != nil {
+			return nil, err
+		}
+		metadata, ok := reqData["metadata"].(map[string]interface{})
+		if ok {
+			annotations, ok := metadata["annotations"].(map[string]interface{})
+			if ok {
+				appliedConfig, ok := annotations["kubectl.kubernetes.io/last-applied-configuration"].(string)
+				if ok {
+					rawRequestData = []byte(appliedConfig)
+				}
+			}
+		}
+		payloadYAML, err = yaml.JSONToYAML(rawRequestData)
+		if err != nil {
+			return nil, err
+		}
+	}
+	labels := make(map[string]string)
+	labels["snow.controller/changeID"] = changeIDStr
+	if parentChangeID != "" {
+		labels["snow.controller/parentChangeID"] = parentChangeID
+	}
+	err := resource.Create(ctx, name, req.Namespace, operation, req.Kind.Kind, string(payloadYAML), labels, generateName)
+	if err != nil {
+		logger.Error(err, "unable to create the service now request for the given change")
+		return &admissionv1.AdmissionResponse{
+			Allowed: false,
+			Result: &metav1.Status{
+				Message: fmt.Sprintf("unable to create the snow request for the given CR,"+
+					"please try creating manually %v", err),
+			},
+		}, nil
+	} else {
+		return &admissionv1.AdmissionResponse{
+			Allowed: true,
+			UID:     req.UID,
+			Result: &metav1.Status{
+				Code:    http.StatusOK,
+				Message: "request accepted and corresponding service now request has been created",
+			},
+		}, nil
+	}
 }

@@ -50,9 +50,24 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		snowController, err := controller.NewSnowResource(group, version, resource, true)
 		if err != nil {
+			logger.Error(err, "error while creating snow resource controller")
+			w.Header().Set("Content-Type", "application/json")
+			writer, err := w.Write([]byte(err.Error()))
+			if err != nil {
+				logger.Error(err, "error while parsing the error response", "WriteValue", writer)
+			}
 			return
 		}
 		admissionReview.Response, err = handleAdmissionRequest(ctx, admissionReview.Request, snowController)
+		if err != nil {
+			logger.Error(err, "error while handling admission request")
+			w.Header().Set("Content-Type", "application/json")
+			writer, err := w.Write([]byte(err.Error()))
+			if err != nil {
+				logger.Error(err, "error while parsing the error response", "WriteValue", writer)
+			}
+			return
+		}
 	}
 	responseBytes, err := json.Marshal(admissionReview)
 	if err != nil {

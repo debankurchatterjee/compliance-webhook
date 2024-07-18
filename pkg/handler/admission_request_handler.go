@@ -46,5 +46,6 @@ func isOwnerApproved(ctx context.Context,
 	OwnerChangeIDStr := hex.EncodeToString(changeID[:])
 	logger.Info("change for owner request", "Name", name, "Operation", operation, "Namespace", namespace, "Kind", kind)
 	logger.Info("change id for the parent request", "ChangeID", OwnerChangeIDStr)
-	return resource.Get(ctx, OwnerChangeIDStr, "", operation, true)
+	_, ownerApproved, err := resource.Get(ctx, OwnerChangeIDStr, "", operation, true)
+	return ownerApproved, err
 }
