@@ -31,11 +31,11 @@ As described in the below sequence diagram.
 
 Validating admission webhooks are used to validate objects sent to the Kubernetes API server. They cannot modify objects; they can only accept or reject them based on some criteria.
 Use Cases:
-    Enforcing policies.
+Enforcing policies.
 
-    Validating configuration settings.
+Validating configuration settings.
 
-    Ensuring security compliance
+Ensuring security compliance
 
 ```yaml
    apiVersion: admissionregistration.k8s.io/v1
