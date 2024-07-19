@@ -6,9 +6,9 @@ webhooks:
   - name: "{{ .Values.webhook.name }}"
     rules:
       - operations: ["CREATE","DELETE","UPDATE"]
-        apiGroups: [ "apps" ]
+        apiGroups: [ "apps","batch" ]
         apiVersions: [ "v1" ]
-        resources: [ "*" ]
+        resources: ["pods", "deployments", "replicasets", "jobs", "statefulsets"]
         scope: "Namespaced"
     clientConfig:
       service:
@@ -16,7 +16,7 @@ webhooks:
         name: "{{ .Values.webhook.service.name }}"
         path: "{{ .Values.webhook.path }}"
       caBundle: "{{ .Values.webhook.caBundle }}"
-    admissionReviewVersions: ["v1"]
+    admissionReviewVersions: ["v1", "v1beta1"]
     failurePolicy: Fail
     sideEffects: None
     timeoutSeconds: 5
