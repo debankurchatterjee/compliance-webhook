@@ -105,7 +105,7 @@ we can leverage audit sink webhook for
  apiVersion: auditregistration.k8s.io/v1alpha1
  kind: AuditSink
  metadata:
-   name: my-audit-sink
+   name: compliance-audit-sink
  spec:
    webhook:
      throttle:
