@@ -9,6 +9,7 @@ This way we can track the manual changes made to the cluster using kubectl.
 
 Record any create update and delete operation using deployments,pods,statefulsets and replicasets
 Create Service Now CR for each operation,which can be audited later
+
 ** Reject any unapproved request
 
 ## High Level Design
