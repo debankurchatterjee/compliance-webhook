@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/md5" //nolint
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -38,7 +38,7 @@ func operationHandlerImpl(ctx context.Context,
 	ownerReferences []interface{}, logger logr.Logger) (*admissionv1.AdmissionResponse, error) {
 
 	changeStr := fmt.Sprintf("%s-%s-%s-%s", name, operation, namespace, kind)
-	changeID := md5.Sum([]byte(changeStr))
+	changeID := md5.Sum([]byte(changeStr)) // nolint
 	changeIDStr := hex.EncodeToString(changeID[:])
 	logger.Info("change id for given request", "ChangeID", changeIDStr)
 	logger.Info("current resource info", "Kind", kind, "Name", name, "Namespace", namespace)
@@ -99,13 +99,13 @@ func getAndCreateOperationCR(ctx context.Context, req *admissionv1.AdmissionRequ
 			name = fmt.Sprintf("%s-%d", name, 1)
 			logger.Info("current name with no revision", "Name", name)
 		} else {
-			revisionNum = revisionNum + 1
+			revisionNum++
 			res[len(res)-1] = fmt.Sprintf("%d", revisionNum)
 			name = strings.Join(res, "-")
 			logger.Info("current name with updated revision", "Name", name)
 		}
 		parentChangeID := changeIDStr
-		changeID := md5.Sum([]byte(name))
+		changeID := md5.Sum([]byte(name)) //nolint
 		changeIDStr = hex.EncodeToString(changeID[:])
 		logger.Info("change id for given request", "ChangeID", changeIDStr)
 		return createCR(ctx, req, operation, changeIDStr, parentChangeID, name, byPassPayloadInjection, logger, resource, false)

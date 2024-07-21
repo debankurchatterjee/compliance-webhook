@@ -35,7 +35,7 @@ type SnowResourceController interface {
 	Delete(ctx context.Context, name, namespace, operation string) error
 }
 
-func (s SnowResource) Get(ctx context.Context, label, namespace, operation string, bypassStatusCheck bool) (string, bool, error) {
+func (s SnowResource) Get(ctx context.Context, label, namespace, operation string, bypassStatusCheck bool) (name string, isAvailable bool, err1 error) {
 	var obj *unstructured.Unstructured
 	var err error
 	if operation == "update" {
