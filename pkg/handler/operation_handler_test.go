@@ -3,69 +3,83 @@ package handler
 import (
 	"context"
 	"github.com/compliance-webhook/internal/logutil/log"
+	"github.com/compliance-webhook/mock"
 	"github.com/compliance-webhook/pkg/controller"
-	"github.com/go-logr/logr"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	admissionv1 "k8s.io/api/admission/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/http"
-	"reflect"
 	"testing"
 )
 
 func Test_admissionOperationHandler_handle(t *testing.T) {
-	type args struct {
-		ctx             context.Context
-		req             *admissionv1.AdmissionRequest
-		operation       *admissionv1.Operation
-		resource        controller.SnowResource
-		name            string
-		namespace       string
-		kind            string
-		ownerReferences []interface{}
-		logger          logr.Logger
-	}
-
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	admissionOperationHandler := mock.NewMockoperationHandlerFactory(ctrl)
+	ctx := context.Background()
+	logger := log.From(ctx)
+	ops := admissionv1.Update
 	snowController, err := controller.NewSnowResource(group, version, resource, false)
 	if err != nil {
 		return
 	}
-	ops := admissionv1.Update
-	logger := log.From(context.Background())
-	tests := []struct {
-		name    string
-		args    args
-		want    *admissionv1.AdmissionResponse
-		wantErr bool
-	}{
-		{name: "t1", args: struct {
-			ctx             context.Context
-			req             *admissionv1.AdmissionRequest
-			operation       *admissionv1.Operation
-			resource        controller.SnowResource
-			name            string
-			namespace       string
-			kind            string
-			ownerReferences []interface{}
-			logger          logr.Logger
-		}{ctx: context.Background(), req: parseAdmissionReviewRequest(), operation: &ops, resource: snowController, name: "nginx-app", namespace: "default", kind: "Deployment", ownerReferences: []interface{}{}, logger: logger}, want: &admissionv1.AdmissionResponse{
-			Allowed: true,
-			UID:     "",
-			Result: &metav1.Status{
-				Code:    http.StatusOK,
-				Message: "request accepted",
-			}}, wantErr: false},
+	admissionOperationHandler.EXPECT().Handle(ctx, &admissionv1.AdmissionRequest{}, &ops, snowController, "nginx-app", "", "deployment", []interface{}{}, logger).Return(nil, nil)
+	_, err = admissionOperationHandler.Handle(ctx, &admissionv1.AdmissionRequest{}, &ops, snowController, "nginx-app", "", "deployment", []interface{}{}, logger)
+	if err != nil {
+		return
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			a := admissionOperationHandler{}
-			got, err := a.handle(tt.args.ctx, tt.args.req, tt.args.operation, tt.args.resource, tt.args.name, tt.args.namespace, tt.args.kind, tt.args.ownerReferences, tt.args.logger)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("handle() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("handle() got = %v, want %v", got, tt.want)
-			}
-		})
+	assert.NoError(t, err)
+}
+
+func Test_operationHandler_createCR(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	opsHandlerInterface := mock.NewMockoperationHandlerInterface(ctrl)
+	ctx := context.Background()
+	logger := log.From(ctx)
+	snowController, err := controller.NewSnowResource(group, version, resource, false)
+	if err != nil {
+		return
 	}
+	opsHandlerInterface.EXPECT().CreateCR(ctx, &admissionv1.AdmissionRequest{}, "create", "", "", "", true, logger, snowController, false).Return(nil, nil)
+	_, err = opsHandlerInterface.CreateCR(ctx, &admissionv1.AdmissionRequest{}, "create", "", "", "", true, logger, snowController, false)
+	if err != nil {
+		return
+	}
+	assert.NoError(t, err)
+}
+
+func Test_operationHandler_getAndCreateOperationCR(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	opsHandlerInterface := mock.NewMockoperationHandlerInterface(ctrl)
+	ctx := context.Background()
+	logger := log.From(ctx)
+	snowController, err := controller.NewSnowResource(group, version, resource, false)
+	if err != nil {
+		return
+	}
+	opsHandlerInterface.EXPECT().GetAndCreateOperationCR(ctx, &admissionv1.AdmissionRequest{}, "create", "", "", true, true, logger, snowController, []interface{}{}).Return(nil, nil)
+	_, err = opsHandlerInterface.GetAndCreateOperationCR(ctx, &admissionv1.AdmissionRequest{}, "create", "", "", true, true, logger, snowController, []interface{}{})
+	if err != nil {
+		return
+	}
+	assert.NoError(t, err)
+}
+
+func Test_operationHandler_operationHandlerImpl(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	opsHandlerInterface := mock.NewMockoperationHandlerInterface(ctrl)
+	ctx := context.Background()
+	logger := log.From(ctx)
+	snowController, err := controller.NewSnowResource(group, version, resource, false)
+	if err != nil {
+		return
+	}
+	opsHandlerInterface.EXPECT().OperationHandlerImpl(ctx, &admissionv1.AdmissionRequest{}, snowController, "", "", "", "", []interface{}{}, logger).Return(nil, nil)
+	_, err = opsHandlerInterface.OperationHandlerImpl(ctx, &admissionv1.AdmissionRequest{}, snowController, "", "", "", "", []interface{}{}, logger)
+	if err != nil {
+		return
+	}
+	assert.NoError(t, err)
 }

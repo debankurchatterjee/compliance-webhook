@@ -35,31 +35,18 @@ func (m *MockSnowResourceController) EXPECT() *MockSnowResourceControllerMockRec
 }
 
 // Create mocks base method.
-func (m *MockSnowResourceController) Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string, generateName bool) error {
+func (m *MockSnowResourceController) Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string, generateName bool) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, name, namespace, operation, kind, payload, labels, generateName)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
 func (mr *MockSnowResourceControllerMockRecorder) Create(ctx, name, namespace, operation, kind, payload, labels, generateName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockSnowResourceController)(nil).Create), ctx, name, namespace, operation, kind, payload, labels, generateName)
-}
-
-// Delete mocks base method.
-func (m *MockSnowResourceController) Delete(ctx context.Context, name, namespace, operation string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, name, namespace, operation)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Delete indicates an expected call of Delete.
-func (mr *MockSnowResourceControllerMockRecorder) Delete(ctx, name, namespace, operation interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockSnowResourceController)(nil).Delete), ctx, name, namespace, operation)
 }
 
 // Get mocks base method.
@@ -76,18 +63,4 @@ func (m *MockSnowResourceController) Get(ctx context.Context, label, namespace, 
 func (mr *MockSnowResourceControllerMockRecorder) Get(ctx, label, namespace, operation, bypassStatusCheck interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockSnowResourceController)(nil).Get), ctx, label, namespace, operation, bypassStatusCheck)
-}
-
-// Update mocks base method.
-func (m *MockSnowResourceController) Update(ctx context.Context, name, namespace, operation string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ctx, name, namespace, operation)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Update indicates an expected call of Update.
-func (mr *MockSnowResourceControllerMockRecorder) Update(ctx, name, namespace, operation interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSnowResourceController)(nil).Update), ctx, name, namespace, operation)
 }

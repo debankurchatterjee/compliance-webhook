@@ -14,7 +14,7 @@ import (
 
 var OperationHandlerFactory operationHandlerFactory = &admissionOperationHandler{}
 
-// handleAdmissionRequest will handle the validation admission request on deployments,pods,statefulsets,replicasets and jobs
+// handleAdmissionRequest will Handle the validation admission request on deployments,pods,statefulsets,replicasets and jobs
 func handleAdmissionRequest(ctx context.Context,
 	req *admissionv1.AdmissionRequest,
 	resource controller.SnowResource) (*admissionv1.AdmissionResponse, error) {
@@ -34,10 +34,10 @@ func handleAdmissionRequest(ctx context.Context,
 		"ChangeName", name,
 		"Namespace", namespace)
 
-	return OperationHandlerFactory.handle(ctx, req, &req.Operation, resource, name, namespace, kind, ownerReferences, logger)
+	return OperationHandlerFactory.Handle(ctx, req, &req.Operation, resource, name, namespace, kind, ownerReferences, logger)
 }
 
-// isOwnerApproved it checks if the request has owner reference and it is approved or not
+// isOwnerApproved it checks if the request has owner reference, and it is approved or not
 func isOwnerApproved(ctx context.Context,
 	kind,
 	name,

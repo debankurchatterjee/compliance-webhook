@@ -18,8 +18,8 @@ func TestSnowResource_Create(t *testing.T) {
 	mockClient := getSnowResourceControllerMock(t)
 	labels := make(map[string]string)
 	labels["snow.controller/changeID"] = "eq2u23i234f223223fj2kfjervervre"
-	mockClient.EXPECT().Create(context.Background(), "test", "snow-compliance", "create", "deployment", "", labels, true).Return(nil)
-	err := mockClient.Create(context.Background(), "test", "snow-compliance", "create", "deployment", "", labels, true)
+	mockClient.EXPECT().Create(context.Background(), "test", "snow-compliance", "create", "deployment", "", labels, true).Return("", nil)
+	_, err := mockClient.Create(context.Background(), "test", "snow-compliance", "create", "deployment", "", labels, true)
 	if err != nil {
 		return
 	}

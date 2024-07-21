@@ -71,6 +71,7 @@ type LoggerConfig struct {
 	out io.Writer
 }
 
+// newLoggerConfig constructor
 func newLoggerConfig() *LoggerConfig {
 	config := &LoggerConfig{
 		out: os.Stderr,
@@ -88,12 +89,14 @@ func (u UTCFormatter) Format(e *logrus.Entry) ([]byte, error) {
 	return u.Formatter.Format(e)
 }
 
+// update the logger config
 func (config *LoggerConfig) update(logger *logrus.Logger, timeformat *string) {
 	logger.Out = config.out
 	logger.SetFormatter(UTCFormatter{&logrus.TextFormatter{TimestampFormat: *timeformat,
 		FullTimestamp: true}})
 }
 
+// newLogger is a constructor to define new logger
 func newLogger(timeformat *string, options ...LoggerOption) logr.Logger {
 	once.Do(func() {
 		currentLogFilePath := logfilePath

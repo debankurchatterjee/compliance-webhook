@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+// SnowResource struct which wraps around k8s dynamic client to create snow resource.
 type SnowResource struct {
 	DynamicKubernetesClient k8s.KubernetesClient
 	Group                   string
@@ -15,6 +16,7 @@ type SnowResource struct {
 	Resource                string
 }
 
+// NewSnowResource is a constructor for SnowResource
 func NewSnowResource(group, version, resource string, isInClusterConfig bool) (SnowResource, error) {
 	k8sDynamicClient, err := k8s.NewKubernetesCustomResourceClient(isInClusterConfig)
 	if err != nil {
@@ -28,13 +30,13 @@ func NewSnowResource(group, version, resource string, isInClusterConfig bool) (S
 	}, nil
 }
 
+// SnowResourceController is the interface to handle GET and CREATE operation on snow resource
 type SnowResourceController interface {
 	Get(ctx context.Context, label, namespace, operation string, bypassStatusCheck bool) (string, bool, error)
-	Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string, generateName bool) error
-	Update(ctx context.Context, name, namespace, operation string) error
-	Delete(ctx context.Context, name, namespace, operation string) error
+	Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string, generateName bool) (string, error)
 }
 
+// Get will get snow resource based on labels
 func (s SnowResource) Get(ctx context.Context, label, namespace, operation string, bypassStatusCheck bool) (name string, isAvailable bool, err1 error) {
 	var obj *unstructured.Unstructured
 	var err error
@@ -70,7 +72,8 @@ func (s SnowResource) Get(ctx context.Context, label, namespace, operation strin
 	return "", false, err
 }
 
-func (s SnowResource) Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string, generateName bool) error {
+// Create will create snow resource based on below arguments
+func (s SnowResource) Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string, generateName bool) (string, error) {
 	createName := fmt.Sprintf("%s-%s-%s", name, namespace, operation)
 	if operation == "update" {
 		createName = fmt.Sprintf("%s-1", createName)
@@ -100,13 +103,5 @@ func (s SnowResource) Create(ctx context.Context, name, namespace, operation, ki
 		Version:  s.Version,
 		Resource: s.Resource,
 	})
-	return err
-}
-
-func (s SnowResource) Update(ctx context.Context, name, namespace, operation string) error {
-	return nil
-}
-
-func (s SnowResource) Delete(ctx context.Context, name, namespace, operation string) error {
-	return nil
+	return createName, err
 }
