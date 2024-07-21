@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 )
 
+// KubernetesCustomResourceClient which defines the dynamic client to do custom resource LCM
 type KubernetesCustomResourceClient struct {
 	DynamicClient dynamic.DynamicClient
 }
@@ -22,6 +23,7 @@ const snowLabel = "snow.controller/changeID"
 const parentLabel = "snow.controller/parentChangeID"
 const snowNamespace = "snow-compliance"
 
+// NewKubernetesCustomResourceClient is the constructor for KubernetesCustomResourceClient
 func NewKubernetesCustomResourceClient(inClusterConfig bool) (*KubernetesCustomResourceClient, error) {
 	var dynamicClient *dynamic.DynamicClient
 	if inClusterConfig {
@@ -52,6 +54,7 @@ func NewKubernetesCustomResourceClient(inClusterConfig bool) (*KubernetesCustomR
 	}, nil
 }
 
+// KubernetesClient is the interface to implement KubernetesCustomResourceClient for GET and CREATE Methods
 type KubernetesClient interface {
 	Get(ctx context.Context, label string, namespace string,
 		gvr schema.GroupVersionResource) (*unstructured.Unstructured, error)
@@ -61,6 +64,8 @@ type KubernetesClient interface {
 		gvr schema.GroupVersionResource) (*unstructured.Unstructured, error)
 }
 
+// Get method will fetch the initial result based on the label selector
+// this is mainly used for owner reference if one of the owner is approved then request will be auto approved
 func (c *KubernetesCustomResourceClient) Get(ctx context.Context, label string, namespace string,
 	gvr schema.GroupVersionResource) (*unstructured.Unstructured, error) {
 	logger := log.From(ctx)
@@ -78,6 +83,7 @@ func (c *KubernetesCustomResourceClient) Get(ctx context.Context, label string, 
 	return &list.Items[0], nil
 }
 
+// GetLatest method will fetch the latest result based on label selector this method will help to determine last updated resource
 func (c *KubernetesCustomResourceClient) GetLatest(ctx context.Context, label string, namespace string,
 	gvr schema.GroupVersionResource) (*unstructured.Unstructured, error) {
 	logger := log.From(ctx)
@@ -95,6 +101,7 @@ func (c *KubernetesCustomResourceClient) GetLatest(ctx context.Context, label st
 	return &list.Items[len(list.Items)-1], nil
 }
 
+// Create will create the CR
 func (c *KubernetesCustomResourceClient) Create(ctx context.Context,
 	payload *unstructured.Unstructured,
 	gvr schema.GroupVersionResource) (*unstructured.Unstructured, error) {
