@@ -17,6 +17,7 @@ import (
 const securePort = "8443"
 const unSecurePort = "8001"
 
+// RunUnsecure used for local debugging purpose
 func RunUnsecure(ctx context.Context) {
 	http.HandleFunc("/validate", handler.WebhookHandler)
 	logger := log.From(ctx).WithName("webhook-server")
@@ -49,6 +50,7 @@ func RunUnsecure(ctx context.Context) {
 	logger.Info("Server exiting")
 }
 
+// Run create the webhook server running on 8443 port
 func Run(ctx context.Context) {
 	http.HandleFunc("/validate", handler.WebhookHandler)
 	logger := log.From(ctx).WithName("webhook-server")
