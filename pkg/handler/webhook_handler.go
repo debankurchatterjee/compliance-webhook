@@ -17,6 +17,7 @@ const (
 	resource = "snows"
 )
 
+// WebhookHandler it is the http handler this will handle the http request from the API server
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	var admissionReview admissionv1.AdmissionReview
 	ctx := r.Context()

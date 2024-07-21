@@ -6,6 +6,7 @@ import (
 	admissionv1 "k8s.io/api/admission/v1"
 )
 
+// FindOwnerReferenceFromRawObject utility function to find the owner reference from the raw object
 func FindOwnerReferenceFromRawObject(req *admissionv1.AdmissionRequest) ([]interface{}, error) {
 	if req == nil {
 		return []interface{}{}, nil
@@ -31,6 +32,7 @@ func FindOwnerReferenceFromRawObject(req *admissionv1.AdmissionRequest) ([]inter
 	return ownerReferences, nil
 }
 
+// ParseOwnerReference utility function to parse the owner reference, and it will return the owner reference as {kind,name}
 func ParseOwnerReference(refs []interface{}) [][2]string {
 	results := make([][2]string, 0)
 	for _, ref := range refs {

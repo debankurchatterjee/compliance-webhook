@@ -18,14 +18,17 @@ import (
 	"strings"
 )
 
+// admissionOperationHandler struct to handle admission operation
 type admissionOperationHandler struct {
 }
 
+// operationHandlerFactory it is a factory interface to handle the CUD operation on the resources
 type operationHandlerFactory interface {
 	handle(ctx context.Context, req *admissionv1.AdmissionRequest, operation *admissionv1.Operation, resource controller.SnowResource, name, namespace, kind string,
 		ownerReferences []interface{}, logger logr.Logger) (*admissionv1.AdmissionResponse, error)
 }
 
+// handle method with handle each operation using operationHandlerImpl
 func (a admissionOperationHandler) handle(ctx context.Context, req *admissionv1.AdmissionRequest, operation *admissionv1.Operation, resource controller.SnowResource, name, namespace, kind string, ownerReferences []interface{}, logger logr.Logger) (*admissionv1.AdmissionResponse, error) {
 	return operationHandlerImpl(ctx, req, resource, name, strings.ToLower(string(*operation)), namespace, kind, ownerReferences, logger)
 }
@@ -58,6 +61,8 @@ func operationHandlerImpl(ctx context.Context,
 	}, nil
 }
 
+// getAndCreateOperationCR this function will check for owner reference if the owner reference is already approved
+// then it will approve the admission request else it will check if the CR is already there if not it will create the new CR and approve the request
 func getAndCreateOperationCR(ctx context.Context, req *admissionv1.AdmissionRequest, operation, changeIDStr, namespace string, byPassStatusCheck, byPassPayloadInjection bool, logger logr.Logger, resource controller.SnowResource, ownerReferences []interface{}) (*admissionv1.AdmissionResponse, error) {
 	if len(ownerReferences) > 0 {
 		ownRefs := k8s.ParseOwnerReference(ownerReferences)[0]
@@ -120,6 +125,7 @@ func getAndCreateOperationCR(ctx context.Context, req *admissionv1.AdmissionRequ
 	}, nil
 }
 
+// createCR wraps around k8s dynamic client which will create the snow the CR
 func createCR(ctx context.Context, req *admissionv1.AdmissionRequest, operation, changeIDStr, parentChangeID, name string, byPassPayloadInjection bool, logger logr.Logger, resource controller.SnowResource, generateName bool) (*admissionv1.AdmissionResponse, error) {
 	var payloadYAML = []byte{}
 	// bypass payload injection for Delete operation
