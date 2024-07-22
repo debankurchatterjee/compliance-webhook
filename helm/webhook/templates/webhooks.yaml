@@ -6,10 +6,14 @@ webhooks:
   - name: "{{ .Values.webhook.name }}"
     rules:
       - operations: ["CREATE","DELETE","UPDATE"]
-        apiGroups: [ "apps","batch" ]
+        apiGroups: [ "apps","batch","rbac.authorization.k8s.io" ]
         apiVersions: [ "v1" ]
         resources: ["pods", "deployments", "replicasets", "jobs", "statefulsets"]
         scope: "Namespaced"
+      - operations: [ "CREATE","DELETE","UPDATE" ]
+        apiGroups: [ "rbac.authorization.k8s.io" ]
+        apiVersions: [ "v1" ]
+        resources: [ "roles", "clusterroles", "rolebindings","serviceaccounts" ]
     clientConfig:
       service:
         namespace: "{{ .Values.webhook.service.namespace }}"

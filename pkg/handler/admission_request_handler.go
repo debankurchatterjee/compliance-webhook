@@ -2,9 +2,6 @@ package handler
 
 import (
 	"context"
-	"crypto/md5" //nolint
-	"encoding/hex"
-	"fmt"
 	"github.com/compliance-webhook/internal/k8s"
 	"github.com/compliance-webhook/internal/logutil/log"
 	"github.com/compliance-webhook/pkg/controller"
@@ -44,9 +41,7 @@ func isOwnerApproved(ctx context.Context,
 	namespace,
 	operation string,
 	resource controller.SnowResource, logger logr.Logger) (bool, error) {
-	changeStr := fmt.Sprintf("%s-%s-%s-%s", name, operation, namespace, kind)
-	changeID := md5.Sum([]byte(changeStr)) //nolint
-	OwnerChangeIDStr := hex.EncodeToString(changeID[:])
+	OwnerChangeIDStr := k8s.GenerateChangeID(name, namespace, operation, kind)
 	logger.Info("change for owner request", "Name", name, "Operation", operation, "Namespace", namespace, "Kind", kind)
 	logger.Info("change id for the parent request", "ChangeID", OwnerChangeIDStr)
 	_, ownerApproved, err := resource.Get(ctx, OwnerChangeIDStr, "", operation, true)

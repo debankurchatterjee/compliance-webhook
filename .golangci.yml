@@ -38,9 +38,10 @@ linters:
   fast: true
 run:
   skip-dirs:
-    - simulator
-    - gen
-    - localdebug
+    - bdd
+    - bin
+    - certs
+    - mock
   skip-files:
     - ".*/.*zz_generated.*\\.go"
     - ".*/contrib/.*"

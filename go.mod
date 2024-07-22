@@ -4,6 +4,7 @@ go 1.22.0
 
 require (
 	github.com/bombsimon/logrusr/v3 v3.1.0
+	github.com/cucumber/godog v0.14.1
 	github.com/go-logr/logr v1.4.1
 	github.com/golang/mock v1.6.0
 	github.com/sirupsen/logrus v1.9.3
@@ -15,10 +16,16 @@ require (
 )
 
 require (
+	github.com/cucumber/gherkin/go/v26 v26.2.0 // indirect
+	github.com/cucumber/messages/go/v21 v21.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
+	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
+	github.com/hashicorp/go-memdb v1.3.4 // indirect
+	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-app
+  name: nginx-app-1
   labels:
     app: nginx
 spec:
@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.26.1
+          image: nginx:1.27
           ports:
             - containerPort: 80

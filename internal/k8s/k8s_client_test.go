@@ -21,11 +21,11 @@ func TestKubernetesCustomResourceClient_Create(t *testing.T) {
 			"apiVersion": fmt.Sprintf("%s/%s", "", ""),
 			"kind":       "Snow",
 			"metadata": map[string]interface{}{
-				"name": "test",
+				"name": "bdd_test",
 			},
 			"spec": map[string]interface{}{
 				"operation":  "create",
-				"changeName": "test-1",
+				"changeName": "bdd_test-1",
 				"namespace":  "default",
 				"kind":       "deployment",
 				"payload":    "",
@@ -51,12 +51,12 @@ func TestKubernetesCustomResourceClient_Get(t *testing.T) {
 	defer ctrl.Finish()
 	// Create the mock client
 	mockClient := mock.NewMockKubernetesClient(ctrl)
-	mockClient.EXPECT().Get(context.Background(), "snow.controller/changeID=dqyru1i2rufqfqhifqw", "test", schema.GroupVersionResource{
+	mockClient.EXPECT().Get(context.Background(), "snow.controller/changeID=dqyru1i2rufqfqhifqw", "bdd_test", schema.GroupVersionResource{
 		Group:    "compliance.complaince.org",
 		Version:  "v1",
 		Resource: "snows",
 	}).Return(nil, nil)
-	_, err := mockClient.Get(context.Background(), "snow.controller/changeID=dqyru1i2rufqfqhifqw", "test", schema.GroupVersionResource{
+	_, err := mockClient.Get(context.Background(), "snow.controller/changeID=dqyru1i2rufqfqhifqw", "bdd_test", schema.GroupVersionResource{
 		Group:    "compliance.complaince.org",
 		Version:  "v1",
 		Resource: "snows"})
@@ -68,12 +68,12 @@ func TestKubernetesCustomResourceClient_GetLatest(t *testing.T) {
 	defer ctrl.Finish()
 	// Create the mock client
 	mockClient := mock.NewMockKubernetesClient(ctrl)
-	mockClient.EXPECT().GetLatest(context.Background(), "snow.controller/parentID=dqyru1i2rufqfqhifqw", "test", schema.GroupVersionResource{
+	mockClient.EXPECT().GetLatest(context.Background(), "snow.controller/parentID=dqyru1i2rufqfqhifqw", "bdd_test", schema.GroupVersionResource{
 		Group:    "compliance.complaince.org",
 		Version:  "v1",
 		Resource: "snows",
 	}).Return(nil, nil)
-	_, err := mockClient.GetLatest(context.Background(), "snow.controller/parentID=dqyru1i2rufqfqhifqw", "test", schema.GroupVersionResource{
+	_, err := mockClient.GetLatest(context.Background(), "snow.controller/parentID=dqyru1i2rufqfqhifqw", "bdd_test", schema.GroupVersionResource{
 		Group:    "compliance.complaince.org",
 		Version:  "v1",
 		Resource: "snows"})

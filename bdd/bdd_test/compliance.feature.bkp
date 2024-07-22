@@ -1,0 +1,41 @@
+ Scenario: Update a Deployment
+       Given a valid Deployment definition
+       When I apply the Deployment definition
+       Then the Deployment should be updated successfully
+       Then corresponding snow should be created with parent ID
+
+ Scenario: Create a Pod
+      Given a valid Pod definition
+      When I apply the Pod definition
+      Then the Pod should be created successfully
+      Then corresponding snow CR should be created with Change ID
+
+  Scenario: Update a Pod
+        Given a valid Pod definition
+        When I apply the Pod definition
+        Then the Deployment should be updated successfully
+        Then corresponding snow should be created with parent ID
+
+  Scenario: Delete a Pod
+          Given a valid Pod definition
+          When I delete the Pod definition
+          Then the Pod should be delete successfully
+          Then corresponding snow should be created with change ID
+
+    Scenario: Create a Job
+        Given a valid Job definition
+        When I apply the Job definition
+        Then the Pod should be created successfully
+        Then corresponding snow CR should be created with Change ID
+
+    Scenario: Update a Job
+          Given a valid Job definition
+          When I apply the Job definition
+          Then the Deployment should be updated successfully
+          Then corresponding snow should be created with parent ID
+
+    Scenario: Delete a Job
+            Given a valid Job definition
+            When I delete the Job definition
+            Then the job should be delete successfully
+            Then corresponding snow should be created with change ID

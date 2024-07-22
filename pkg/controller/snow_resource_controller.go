@@ -6,6 +6,7 @@ import (
 	"github.com/compliance-webhook/internal/k8s"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"strings"
 )
 
 // SnowResource struct which wraps around k8s dynamic client to create snow resource.
@@ -74,13 +75,8 @@ func (s SnowResource) Get(ctx context.Context, label, namespace, operation strin
 
 // Create will create snow resource based on below arguments
 func (s SnowResource) Create(ctx context.Context, name, namespace, operation, kind, payload string, labels map[string]string, generateName bool) (string, error) {
-	createName := fmt.Sprintf("%s-%s-%s", name, namespace, operation)
-	if operation == "update" {
-		createName = fmt.Sprintf("%s-1", createName)
-	}
-	if !generateName {
-		createName = name
-	}
+	createName := fmt.Sprintf("%s-%s-%s-%s-%s", name, namespace, operation, kind, k8s.GenerateRandomSuffix(6))
+	createName = strings.ToLower(createName)
 	obj := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", s.Group, s.Version),

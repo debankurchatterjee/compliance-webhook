@@ -1,10 +1,17 @@
 package k8s
 
 import (
+	"crypto/md5"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	admissionv1 "k8s.io/api/admission/v1"
+	"log"
+	"strings"
 )
+
+const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 // FindOwnerReferenceFromRawObject utility function to find the owner reference from the raw object
 func FindOwnerReferenceFromRawObject(req *admissionv1.AdmissionRequest) ([]interface{}, error) {
@@ -50,4 +57,26 @@ func ParseOwnerReference(refs []interface{}) [][2]string {
 		results = append(results, [2]string{kind, name})
 	}
 	return results
+}
+
+// GenerateRandomSuffix for k8s resource name
+func GenerateRandomSuffix(n int) string {
+	bytes := make([]byte, n)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i, b := range bytes {
+		bytes[i] = letters[b%byte(len(letters))]
+	}
+	return string(bytes)
+}
+
+// GenerateChangeID function will generate the unique hash
+func GenerateChangeID(items ...string) string {
+	id := strings.Join(items, "-")
+	id = strings.ToLower(id)
+	changeID := md5.Sum([]byte(id))
+	return hex.EncodeToString(changeID[:])
 }

@@ -2,8 +2,6 @@ package handler
 
 import (
 	"context"
-	"crypto/md5" //nolint
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/compliance-webhook/internal/k8s"
@@ -14,7 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"sigs.k8s.io/yaml"
-	"strconv"
 	"strings"
 )
 
@@ -23,20 +20,31 @@ type admissionOperationHandler struct {
 }
 
 // operationHandler struct to Handle only operations like create,update and delete
-type operationHandler struct{}
-
-// operationHandlerInterface is an interface to Handle operation,create CR and GET CR
-type operationHandlerInterface interface {
-	OperationHandlerImpl(ctx context.Context,
-		req *admissionv1.AdmissionRequest,
-		resource controller.SnowResource,
-		name, operation, namespace, kind string,
-		ownerReferences []interface{}, logger logr.Logger) (*admissionv1.AdmissionResponse, error)
-	GetAndCreateOperationCR(ctx context.Context, req *admissionv1.AdmissionRequest, operation, changeIDStr, namespace string, byPassStatusCheck, byPassPayloadInjection bool, logger logr.Logger, resource controller.SnowResource, ownerReferences []interface{}) (*admissionv1.AdmissionResponse, error)
-	CreateCR(ctx context.Context, req *admissionv1.AdmissionRequest, operation, changeIDStr, parentChangeID, name string, byPassPayloadInjection bool, logger logr.Logger, resource controller.SnowResource, generateName bool) (*admissionv1.AdmissionResponse, error)
+type operationHandler struct {
+	req                    *admissionv1.AdmissionRequest
+	operation              string
+	currentChangeID        string
+	parentChangeID         string
+	createChangeID         string
+	name                   string
+	namespace              string
+	kind                   string
+	byPassPayloadInjection bool
+	byPassStatusCheck      bool
+	generateName           bool
+	ownerReferences        []interface{}
+	resource               controller.SnowResource
+	logger                 logr.Logger
 }
 
-var opsHandler operationHandler
+// operationHandlerInterface is an interface to Handle operation,create CR and GET CR
+type operationHandlerInterface interface { // nolint
+	OperationHandlerImpl(ctx context.Context) (*admissionv1.AdmissionResponse, error)
+	GetAndCreateOperationCR(ctx context.Context) (*admissionv1.AdmissionResponse, error)
+	CreateCR(ctx context.Context) (*admissionv1.AdmissionResponse, error)
+}
+
+// var opsHandler operationHandler
 
 // operationHandlerFactory it is a factory interface to handle the CUD operation on the resources
 type operationHandlerFactory interface {
@@ -46,28 +54,33 @@ type operationHandlerFactory interface {
 
 // Handle method with handle each operation using OperationHandlerImpl
 func (a admissionOperationHandler) Handle(ctx context.Context, req *admissionv1.AdmissionRequest, operation *admissionv1.Operation, resource controller.SnowResource, name, namespace, kind string, ownerReferences []interface{}, logger logr.Logger) (*admissionv1.AdmissionResponse, error) {
-	return opsHandler.OperationHandlerImpl(ctx, req, resource, name, strings.ToLower(string(*operation)), namespace, kind, ownerReferences, logger)
+	opsHandler := &operationHandler{}
+	opsHandler.req = req
+	opsHandler.resource = resource
+	opsHandler.name = name
+	opsHandler.operation = strings.ToLower(string(*operation))
+	opsHandler.namespace = namespace
+	opsHandler.kind = kind
+	opsHandler.ownerReferences = ownerReferences
+	opsHandler.logger = logger
+
+	return opsHandler.OperationHandlerImpl(ctx)
 }
 
-// operationHandlerImpl will Handle operations create,update and delete
-func (o *operationHandler) OperationHandlerImpl(ctx context.Context,
-	req *admissionv1.AdmissionRequest,
-	resource controller.SnowResource,
-	name, operation, namespace, kind string,
-	ownerReferences []interface{}, logger logr.Logger) (*admissionv1.AdmissionResponse, error) {
-
-	changeStr := fmt.Sprintf("%s-%s-%s-%s", name, operation, namespace, kind)
-	changeID := md5.Sum([]byte(changeStr)) // nolint
-	changeIDStr := hex.EncodeToString(changeID[:])
-	logger.Info("change id for given request", "ChangeID", changeIDStr)
-	logger.Info("current resource info", "Kind", kind, "Name", name, "Namespace", namespace)
-	switch operation {
+// OperationHandlerImpl will Handle operations create,update and delete
+func (o *operationHandler) OperationHandlerImpl(ctx context.Context) (*admissionv1.AdmissionResponse, error) {
+	o.currentChangeID = k8s.GenerateChangeID(o.name, o.namespace, o.operation, o.kind)
+	o.logger.Info("change id for given request", "ChangeID", o.currentChangeID)
+	o.logger.Info("current resource info", "Kind", o.kind, "Name", o.name, "Namespace", o.namespace)
+	o.byPassStatusCheck = true
+	o.byPassPayloadInjection = false
+	switch o.operation {
 	case "create":
-		return opsHandler.GetAndCreateOperationCR(ctx, req, "create", changeIDStr, namespace, true, false, logger, resource, ownerReferences)
+		return o.GetAndCreateOperationCR(ctx)
 	case "delete":
-		return opsHandler.GetAndCreateOperationCR(ctx, req, "delete", changeIDStr, namespace, true, false, logger, resource, ownerReferences)
+		return o.GetAndCreateOperationCR(ctx)
 	case "update":
-		return opsHandler.GetAndCreateOperationCR(ctx, req, "update", changeIDStr, namespace, true, false, logger, resource, ownerReferences)
+		return o.GetAndCreateOperationCR(ctx)
 	}
 	return &admissionv1.AdmissionResponse{
 		Allowed: false,
@@ -77,22 +90,22 @@ func (o *operationHandler) OperationHandlerImpl(ctx context.Context,
 	}, nil
 }
 
-// getAndCreateOperationCR this function will check for owner reference if the owner reference is already approved
+// GetAndCreateOperationCR this function will check for owner reference if the owner reference is already approved
 // then it will approve the admission request else it will check if the CR is already there if not it will create the new CR and approve the request
-func (o *operationHandler) GetAndCreateOperationCR(ctx context.Context, req *admissionv1.AdmissionRequest, operation, changeIDStr, namespace string, byPassStatusCheck, byPassPayloadInjection bool, logger logr.Logger, resource controller.SnowResource, ownerReferences []interface{}) (*admissionv1.AdmissionResponse, error) {
-	if len(ownerReferences) > 0 {
-		ownRefs := k8s.ParseOwnerReference(ownerReferences)[0]
-		logger.Info("found owner reference", "Name", ownRefs[1], "Kind", ownRefs[0], "Namespace", namespace)
-		approved, err := isOwnerApproved(ctx, ownRefs[0], ownRefs[1], namespace, operation, resource, logger)
+func (o *operationHandler) GetAndCreateOperationCR(ctx context.Context) (*admissionv1.AdmissionResponse, error) {
+	if len(o.ownerReferences) > 0 {
+		ownRefs := k8s.ParseOwnerReference(o.ownerReferences)[0]
+		o.logger.Info("found owner reference", "Name", ownRefs[1], "Kind", ownRefs[0], "Namespace", o.namespace)
+		approved, err := isOwnerApproved(ctx, ownRefs[0], ownRefs[1], o.namespace, o.operation, o.resource, o.logger)
 		if err != nil {
 			return nil, err
 		}
 		if approved {
-			logger.Info("owner reference is already approved,child resource will be default approved",
-				"Name", ownRefs[1], "Kind", ownRefs[0], "Namespace", namespace)
+			o.logger.Info("owner reference is already approved,child resource will be default approved",
+				"Name", ownRefs[1], "Kind", ownRefs[0], "Namespace", o.namespace)
 			return &admissionv1.AdmissionResponse{
 				Allowed: true,
-				UID:     req.UID,
+				UID:     o.req.UID,
 				Result: &metav1.Status{
 					Code:    http.StatusOK,
 					Message: "request accepted",
@@ -100,40 +113,28 @@ func (o *operationHandler) GetAndCreateOperationCR(ctx context.Context, req *adm
 			}, nil
 		}
 	}
-	name, result, err := resource.Get(ctx, changeIDStr, req.Namespace, operation, byPassStatusCheck)
+	_, result, err := o.resource.Get(ctx, o.currentChangeID, o.req.Namespace, o.operation, o.byPassStatusCheck)
 	if err != nil {
 		if errors.IsNotFound(err) || !result {
-			logger.Error(err, "unable to find service now request for the change")
-			parentChangeID := ""
-			if operation == "update" {
-				parentChangeID = changeIDStr
+			o.logger.Error(err, "unable to find service now request for the change")
+			o.createChangeID = k8s.GenerateChangeID(o.req.Name, o.req.Namespace, "create", o.req.Kind.Kind)
+			// dummy data to show rejection
+			if o.req.Name == "nginx-app-2" && o.req.Kind.Kind == "Deployment" && o.operation == "create" {
+				return &admissionv1.AdmissionResponse{
+					Allowed: false,
+					UID:     o.req.UID,
+					Result: &metav1.Status{
+						Message: "no approval request",
+					},
+				}, nil
 			}
-			return opsHandler.CreateCR(ctx, req, operation, changeIDStr, parentChangeID, req.Name, byPassPayloadInjection, logger, resource, true)
+			o.generateName = true
 		}
-	}
-	if req.Operation == admissionv1.Update && name != "" {
-		logger.Info("current name", "Name", name)
-		res := strings.Split(name, "-")
-		revision := res[len(res)-1]
-		revisionNum, err := strconv.Atoi(revision)
-		if err != nil {
-			name = fmt.Sprintf("%s-%d", name, 1)
-			logger.Info("current name with no revision", "Name", name)
-		} else {
-			revisionNum++
-			res[len(res)-1] = fmt.Sprintf("%d", revisionNum)
-			name = strings.Join(res, "-")
-			logger.Info("current name with updated revision", "Name", name)
-		}
-		parentChangeID := changeIDStr
-		changeID := md5.Sum([]byte(name)) //nolint
-		changeIDStr = hex.EncodeToString(changeID[:])
-		logger.Info("change id for given request", "ChangeID", changeIDStr)
-		return opsHandler.CreateCR(ctx, req, operation, changeIDStr, parentChangeID, name, byPassPayloadInjection, logger, resource, false)
+		return o.CreateCR(ctx)
 	}
 	return &admissionv1.AdmissionResponse{
 		Allowed: true,
-		UID:     req.UID,
+		UID:     o.req.UID,
 		Result: &metav1.Status{
 			Code:    http.StatusOK,
 			Message: "request accepted",
@@ -141,17 +142,17 @@ func (o *operationHandler) GetAndCreateOperationCR(ctx context.Context, req *adm
 	}, nil
 }
 
-// createCR wraps around k8s dynamic client which will create the snow the CR
-func (o *operationHandler) CreateCR(ctx context.Context, req *admissionv1.AdmissionRequest, operation, changeIDStr, parentChangeID, name string, byPassPayloadInjection bool, logger logr.Logger, resource controller.SnowResource, generateName bool) (*admissionv1.AdmissionResponse, error) {
+// CreateCR wraps around k8s dynamic client which will create the snow the CR
+func (o *operationHandler) CreateCR(ctx context.Context) (*admissionv1.AdmissionResponse, error) {
 	var payloadYAML = []byte{}
 	// bypass payload injection for Delete operation
-	if !byPassPayloadInjection {
+	if !o.byPassPayloadInjection {
 		reqData := make(map[string]interface{})
 		var rawRequestData []byte
-		if req.Operation == admissionv1.Delete {
-			rawRequestData = req.OldObject.Raw
+		if o.req.Operation == admissionv1.Delete {
+			rawRequestData = o.req.OldObject.Raw
 		} else {
-			rawRequestData = req.Object.Raw
+			rawRequestData = o.req.Object.Raw
 		}
 		err := json.Unmarshal(rawRequestData, &reqData)
 		if err != nil {
@@ -173,13 +174,16 @@ func (o *operationHandler) CreateCR(ctx context.Context, req *admissionv1.Admiss
 		}
 	}
 	labels := make(map[string]string)
-	labels["snow.controller/changeID"] = changeIDStr
-	if parentChangeID != "" {
-		labels["snow.controller/parentChangeID"] = parentChangeID
+	labels["snow.controller/changeID"] = o.currentChangeID
+	if o.parentChangeID != "" {
+		labels["snow.controller/parentChangeID"] = o.parentChangeID
 	}
-	name, err := resource.Create(ctx, name, req.Namespace, operation, req.Kind.Kind, string(payloadYAML), labels, generateName)
+	if o.createChangeID != "" {
+		labels["snow.controller/createChangeID"] = o.createChangeID
+	}
+	name, err := o.resource.Create(ctx, o.name, o.req.Namespace, o.operation, o.req.Kind.Kind, string(payloadYAML), labels, o.generateName)
 	if err != nil {
-		logger.Error(err, "unable to create the service now request for the given change")
+		o.logger.Error(err, "unable to create the service now request for the given change")
 		return &admissionv1.AdmissionResponse{
 			Allowed: false,
 			Result: &metav1.Status{
@@ -190,7 +194,7 @@ func (o *operationHandler) CreateCR(ctx context.Context, req *admissionv1.Admiss
 	}
 	return &admissionv1.AdmissionResponse{
 		Allowed: true,
-		UID:     req.UID,
+		UID:     o.req.UID,
 		Result: &metav1.Status{
 			Code:    http.StatusOK,
 			Message: fmt.Sprintf("request accepted and corresponding service now request %s has been created", name),

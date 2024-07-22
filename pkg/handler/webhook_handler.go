@@ -36,13 +36,11 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	bodyStr := string(body)
 	logger.Info("message body", "BodyStr", bodyStr)
 	kind := admissionReview.Request.Kind.Kind
-	patchType := admissionv1.PatchTypeJSONPatch
 	// allow the Snow CR LCM operation
 	if kind == "Snow" {
 		admissionReview.Response = &admissionv1.AdmissionResponse{
-			Allowed:   true,
-			UID:       admissionReview.Request.UID,
-			PatchType: &patchType,
+			Allowed: true,
+			UID:     admissionReview.Request.UID,
 			Result: &metav1.Status{
 				Code:    http.StatusOK,
 				Message: "request accepted",

@@ -17,7 +17,7 @@ var admissionReview = `
       "apiVersion": "apps/v1",
       "metadata": {
         "name": "nginx-app-cbdccf466",
-        "namespace": "test",
+        "namespace": "bdd_test",
         "creationTimestamp": null,
         "labels": {
           "app": "nginx",
@@ -229,7 +229,7 @@ func Test_isOwnerApproved(t *testing.T) {
 			operation string
 			resource  controller.SnowResource
 			logger    logr.Logger
-		}{ctx: context.Background(), kind: "Deployment", name: "test-nginx-app", namespace: "default", operation: "create", resource: snowController, logger: logger}, want: false, wantErr: true},
+		}{ctx: context.Background(), kind: "Deployment", name: "bdd_test-nginx-app", namespace: "default", operation: "create", resource: snowController, logger: logger}, want: false, wantErr: true},
 		{name: "t2", args: struct {
 			ctx       context.Context
 			kind      string

@@ -12,7 +12,7 @@ var admissionReview = `
       "apiVersion": "apps/v1",
       "metadata": {
         "name": "nginx-app-cbdccf466",
-        "namespace": "test",
+        "namespace": "bdd_test",
         "creationTimestamp": null,
         "labels": {
           "app": "nginx",
