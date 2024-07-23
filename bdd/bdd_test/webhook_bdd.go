@@ -9,6 +9,7 @@ import (
 	"github.com/cucumber/godog/colors"
 	"os"
 	"os/exec"
+	"time"
 )
 
 var CrNamespace = "snow-compliance"
@@ -38,7 +39,7 @@ func runKubectlCommand(args ...string) (string, error) {
 }
 
 func aValidDeploymentDefinition() error {
-	_, err := runKubectlCommand("apply", "-f", "examples/deployments/test_deployment.yml", "--dry-run=client")
+	_, err := runKubectlCommand("apply", "-f", "examples/deployments/test_deployment_1.14.1.yml", "--dry-run=client")
 	if err != nil {
 		return err
 	}
@@ -54,7 +55,7 @@ func correspondingCreateSnowCRShouldBeCreatedWithChangeID() error {
 }
 
 func iApplyTheDeploymentDefinition() error {
-	_, err := runKubectlCommand("apply", "-f", "examples/deployments/test_deployment.yml", "-n", "test")
+	_, err := runKubectlCommand("apply", "-f", "examples/deployments/test_deployment_1.14.1.yml", "-n", "test")
 	if err != nil {
 		return err
 	}
@@ -78,7 +79,8 @@ func iDeleteTheDeploymentDefinition() error {
 }
 
 func iApplyTheUpdateDeploymentDefinition() error {
-	_, err := runKubectlCommand("set", "image", fmt.Sprintf("deployment/%s", appName), "nginx=1.26.1", "-n", "test")
+	_, err := runKubectlCommand("apply", "-f", "examples/deployments/test_deployment_1.26.1.yml", "-n", "test")
+	time.Sleep(10 * time.Second)
 	if err != nil {
 		return err
 	}
