@@ -19,6 +19,7 @@ unit:
 
 mock_gen:
 	mockgen -source=pkg/controller/snow_resource_controller.go -destination=mock/mock_snow_recource_controller.go -package=mock
+	mockgen -source=pkg/handler/operation_handler.go -destination=mock/mock_snow_operation_handler.go -package=mock
 
 lint: ## Golang Static code analysis
 	go version

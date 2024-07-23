@@ -38,48 +38,48 @@ func (m *MockoperationHandlerInterface) EXPECT() *MockoperationHandlerInterfaceM
 }
 
 // CreateCR mocks base method.
-func (m *MockoperationHandlerInterface) CreateCR(ctx context.Context, req *v1.AdmissionRequest, operation, changeIDStr, parentChangeID, name string, byPassPayloadInjection bool, logger logr.Logger, resource controller.SnowResource, generateName bool) (*v1.AdmissionResponse, error) {
+func (m *MockoperationHandlerInterface) CreateCR(ctx context.Context) (*v1.AdmissionResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateCR", ctx, req, operation, changeIDStr, parentChangeID, name, byPassPayloadInjection, logger, resource, generateName)
+	ret := m.ctrl.Call(m, "CreateCR", ctx)
 	ret0, _ := ret[0].(*v1.AdmissionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateCR indicates an expected call of CreateCR.
-func (mr *MockoperationHandlerInterfaceMockRecorder) CreateCR(ctx, req, operation, changeIDStr, parentChangeID, name, byPassPayloadInjection, logger, resource, generateName interface{}) *gomock.Call {
+func (mr *MockoperationHandlerInterfaceMockRecorder) CreateCR(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCR", reflect.TypeOf((*MockoperationHandlerInterface)(nil).CreateCR), ctx, req, operation, changeIDStr, parentChangeID, name, byPassPayloadInjection, logger, resource, generateName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCR", reflect.TypeOf((*MockoperationHandlerInterface)(nil).CreateCR), ctx)
 }
 
 // GetAndCreateOperationCR mocks base method.
-func (m *MockoperationHandlerInterface) GetAndCreateOperationCR(ctx context.Context, req *v1.AdmissionRequest, operation, changeIDStr, namespace string, byPassStatusCheck, byPassPayloadInjection bool, logger logr.Logger, resource controller.SnowResource, ownerReferences []interface{}) (*v1.AdmissionResponse, error) {
+func (m *MockoperationHandlerInterface) GetAndCreateOperationCR(ctx context.Context) (*v1.AdmissionResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAndCreateOperationCR", ctx, req, operation, changeIDStr, namespace, byPassStatusCheck, byPassPayloadInjection, logger, resource, ownerReferences)
+	ret := m.ctrl.Call(m, "GetAndCreateOperationCR", ctx)
 	ret0, _ := ret[0].(*v1.AdmissionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAndCreateOperationCR indicates an expected call of GetAndCreateOperationCR.
-func (mr *MockoperationHandlerInterfaceMockRecorder) GetAndCreateOperationCR(ctx, req, operation, changeIDStr, namespace, byPassStatusCheck, byPassPayloadInjection, logger, resource, ownerReferences interface{}) *gomock.Call {
+func (mr *MockoperationHandlerInterfaceMockRecorder) GetAndCreateOperationCR(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAndCreateOperationCR", reflect.TypeOf((*MockoperationHandlerInterface)(nil).GetAndCreateOperationCR), ctx, req, operation, changeIDStr, namespace, byPassStatusCheck, byPassPayloadInjection, logger, resource, ownerReferences)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAndCreateOperationCR", reflect.TypeOf((*MockoperationHandlerInterface)(nil).GetAndCreateOperationCR), ctx)
 }
 
 // OperationHandlerImpl mocks base method.
-func (m *MockoperationHandlerInterface) OperationHandlerImpl(ctx context.Context, req *v1.AdmissionRequest, resource controller.SnowResource, name, operation, namespace, kind string, ownerReferences []interface{}, logger logr.Logger) (*v1.AdmissionResponse, error) {
+func (m *MockoperationHandlerInterface) OperationHandlerImpl(ctx context.Context) (*v1.AdmissionResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "OperationHandlerImpl", ctx, req, resource, name, operation, namespace, kind, ownerReferences, logger)
+	ret := m.ctrl.Call(m, "OperationHandlerImpl", ctx)
 	ret0, _ := ret[0].(*v1.AdmissionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // OperationHandlerImpl indicates an expected call of OperationHandlerImpl.
-func (mr *MockoperationHandlerInterfaceMockRecorder) OperationHandlerImpl(ctx, req, resource, name, operation, namespace, kind, ownerReferences, logger interface{}) *gomock.Call {
+func (mr *MockoperationHandlerInterfaceMockRecorder) OperationHandlerImpl(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OperationHandlerImpl", reflect.TypeOf((*MockoperationHandlerInterface)(nil).OperationHandlerImpl), ctx, req, resource, name, operation, namespace, kind, ownerReferences, logger)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OperationHandlerImpl", reflect.TypeOf((*MockoperationHandlerInterface)(nil).OperationHandlerImpl), ctx)
 }
 
 // MockoperationHandlerFactory is a mock of operationHandlerFactory interface.

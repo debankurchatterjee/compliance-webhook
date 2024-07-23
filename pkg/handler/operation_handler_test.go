@@ -35,13 +35,8 @@ func Test_operationHandler_createCR(t *testing.T) {
 	defer ctrl.Finish()
 	opsHandlerInterface := mock.NewMockoperationHandlerInterface(ctrl)
 	ctx := context.Background()
-	logger := log.From(ctx)
-	snowController, err := controller.NewSnowResource(group, version, resource, false)
-	if err != nil {
-		return
-	}
-	opsHandlerInterface.EXPECT().CreateCR(ctx, &admissionv1.AdmissionRequest{}, "create", "", "", "", true, logger, snowController, false).Return(nil, nil)
-	_, err = opsHandlerInterface.CreateCR(ctx, &admissionv1.AdmissionRequest{}, "create", "", "", "", true, logger, snowController, false)
+	opsHandlerInterface.EXPECT().CreateCR(ctx).Return(nil, nil)
+	_, err := opsHandlerInterface.CreateCR(ctx)
 	if err != nil {
 		return
 	}
@@ -53,13 +48,8 @@ func Test_operationHandler_getAndCreateOperationCR(t *testing.T) {
 	defer ctrl.Finish()
 	opsHandlerInterface := mock.NewMockoperationHandlerInterface(ctrl)
 	ctx := context.Background()
-	logger := log.From(ctx)
-	snowController, err := controller.NewSnowResource(group, version, resource, false)
-	if err != nil {
-		return
-	}
-	opsHandlerInterface.EXPECT().GetAndCreateOperationCR(ctx, &admissionv1.AdmissionRequest{}, "create", "", "", true, true, logger, snowController, []interface{}{}).Return(nil, nil)
-	_, err = opsHandlerInterface.GetAndCreateOperationCR(ctx, &admissionv1.AdmissionRequest{}, "create", "", "", true, true, logger, snowController, []interface{}{})
+	opsHandlerInterface.EXPECT().GetAndCreateOperationCR(ctx).Return(nil, nil)
+	_, err := opsHandlerInterface.GetAndCreateOperationCR(ctx)
 	if err != nil {
 		return
 	}
@@ -71,13 +61,8 @@ func Test_operationHandler_operationHandlerImpl(t *testing.T) {
 	defer ctrl.Finish()
 	opsHandlerInterface := mock.NewMockoperationHandlerInterface(ctrl)
 	ctx := context.Background()
-	logger := log.From(ctx)
-	snowController, err := controller.NewSnowResource(group, version, resource, false)
-	if err != nil {
-		return
-	}
-	opsHandlerInterface.EXPECT().OperationHandlerImpl(ctx, &admissionv1.AdmissionRequest{}, snowController, "", "", "", "", []interface{}{}, logger).Return(nil, nil)
-	_, err = opsHandlerInterface.OperationHandlerImpl(ctx, &admissionv1.AdmissionRequest{}, snowController, "", "", "", "", []interface{}{}, logger)
+	opsHandlerInterface.EXPECT().OperationHandlerImpl(ctx).Return(nil, nil)
+	_, err := opsHandlerInterface.OperationHandlerImpl(ctx)
 	if err != nil {
 		return
 	}

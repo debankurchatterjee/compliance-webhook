@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -11,9 +12,10 @@ import (
 )
 
 var CrNamespace = "snow-compliance"
+var appName = "nginx-app-1"
 
 func querySnowCR(name, operation, kind, namespace, label string) error {
-	changeStr := fmt.Sprintf("%s-%s-%s-%s", name, operation, namespace, kind)
+	changeStr := fmt.Sprintf("%s-%s-%s-%s", name, namespace, operation, kind)
 	changeID := md5.Sum([]byte(changeStr)) //nolint
 	changeIDStr := hex.EncodeToString(changeID[:])
 	res, err := runKubectlCommand("get", "snow", "-l", fmt.Sprintf("%s=%s", label, changeIDStr), "-n", CrNamespace)
@@ -44,7 +46,7 @@ func aValidDeploymentDefinition() error {
 }
 
 func correspondingCreateSnowCRShouldBeCreatedWithChangeID() error {
-	name := "nginx-app"
+	name := appName
 	operation := "create"
 	kind := "Deployment"
 	namespace := "test"
@@ -60,7 +62,7 @@ func iApplyTheDeploymentDefinition() error {
 }
 
 func theDeploymentShouldBeCreatedSuccessfully() error {
-	_, err := runKubectlCommand("get", "deployment", "nginx-app", "-n", "test")
+	_, err := runKubectlCommand("get", "deployment", appName, "-n", "test")
 	if err != nil {
 		return err
 	}
@@ -68,7 +70,7 @@ func theDeploymentShouldBeCreatedSuccessfully() error {
 }
 
 func iDeleteTheDeploymentDefinition() error {
-	_, err := runKubectlCommand("delete", "deployment", "nginx-app", "-n", "test")
+	_, err := runKubectlCommand("delete", "deployment", appName, "-n", "test")
 	if err != nil {
 		return err
 	}
@@ -76,7 +78,7 @@ func iDeleteTheDeploymentDefinition() error {
 }
 
 func iApplyTheUpdateDeploymentDefinition() error {
-	_, err := runKubectlCommand("set", "image", "deployment/nginx-app", "nginx=1.26.1", "-n", "test")
+	_, err := runKubectlCommand("set", "image", fmt.Sprintf("deployment/%s", appName), "nginx=1.26.1", "-n", "test")
 	if err != nil {
 		return err
 	}
@@ -84,11 +86,11 @@ func iApplyTheUpdateDeploymentDefinition() error {
 }
 
 func correspondingUpdateSnowCRShouldBeCreatedWithParentID() error {
-	name := "nginx-app"
+	name := appName
 	operation := "update"
 	kind := "Deployment"
 	namespace := "test"
-	return querySnowCR(name, operation, kind, namespace, "snow.controller/parentChangeID")
+	return querySnowCR(name, operation, kind, namespace, "snow.controller/createChangeID")
 }
 
 func theDeploymentShouldBeUpdatedSuccessfully() error {
@@ -96,7 +98,7 @@ func theDeploymentShouldBeUpdatedSuccessfully() error {
 }
 
 func correspondingDeleteSnowShouldBeCreatedWithChangeID() error {
-	name := "nginx-app"
+	name := appName
 	operation := "delete"
 	kind := "Deployment"
 	namespace := "test"
@@ -104,11 +106,19 @@ func correspondingDeleteSnowShouldBeCreatedWithChangeID() error {
 }
 
 func theDeploymentShouldBeDeleteSuccessfully() error {
-	_, err := runKubectlCommand("get", "deployment", "nginx-app", "-n", "test")
+	_, err := runKubectlCommand("get", "deployment", appName, "-n", "test")
 	if err != nil {
 		return nil
 	}
 	return fmt.Errorf("deployment was not deleted")
+}
+
+func afterScenario(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+	_, err = runKubectlCommand("delete", "all", "--all", "-n", CrNamespace)
+	if err != nil {
+		return ctx, err
+	}
+	return ctx, nil
 }
 
 func InitializeScenario(ctx *godog.ScenarioContext) {

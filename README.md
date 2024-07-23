@@ -93,13 +93,13 @@ make helm-uninstall
 make helm-install
 ```
 
-## Future Goals
+# Future Goals
 
 Audit report to generate by a controller
 
 Track operation based create,update and delete
 
-we can leverage audit sink webhook for 
+we can leverage audit sink webhook
 
 ```yaml
  apiVersion: auditregistration.k8s.io/v1alpha1
@@ -120,3 +120,62 @@ we can leverage audit sink webhook for
      rules:
        - level: Metadata
 ```
+
+## Management Plane and GitOps based Architecture
+
+In this architecture there will be a management plane/cluster which will manage the lifecycle of apps in the workload cluster using GitOps.
+
+![resources/mgmt-gitos.png](resources/mgmt-gitos.png)
+
+#### Application User
+
+General user who wants to deploy apps to the workload cluster
+
+#### Webhook Server
+
+This will be a validating webhook server which will intercept all the mutating operations to the workload cluster,if a resource have an approval
+webhook server will push the spec to the github main branch,which later will be synced to the workload cluster,otherwise it will 
+approval CR later resource management controller will publish the same to GitHub for necessary approval.
+
+#### Resource Management Controller
+
+This controller will reconcile on unapproved CR's created by the Webhook Server and will create necessary Git PR for approval,also this controller
+will publish the approval list to another CR which webhook server will consume for validation.
+
+#### Workload Cluster Namespaces
+
+Each workload cluster will be a namespace in the management cluster so all the resources for a corresponding workload cluster can reside in that namespace.
+
+#### GitHub
+
+GitHub will be used for the approval process, and also it will help to maintain change list executed on each cluster,for better isolation
+each workload cluster can be a repo/project in github.
+
+#### Workload Cluster
+
+Target cluster where the business application will be running.
+
+#### ConfigSync or ArgoCD
+
+These operators will sync the approved spec from the main/release branch and will keep the state of the apps synced with Git.
+
+## Pros and Cons
+
+### Pros
+
+ workload cluster will always have the approved resources.
+ no additional Webhook overhead in the workload cluster.
+ we don't need to manage resource management controllers in the workload cluster.
+ restricted mutation access to the cluster.
+ workload cluster's don't have to maintain the audit history.
+ GitHub will easily help to manage the versioning and change log of the reosurces.
+ 
+
+### Cons
+
+  A management plane need to be introduced which might add additional infra cost and maintenance.
+  If number of workload clusters are more then the management plane need to scaled horizontally.
+
+
+    
+ 
