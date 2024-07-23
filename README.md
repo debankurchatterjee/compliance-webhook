@@ -41,42 +41,57 @@ Ensuring security compliance
    apiVersion: admissionregistration.k8s.io/v1
    kind: ValidatingWebhookConfiguration
    metadata:
-     name: cluster-compliance
-     labels:
-       app.kubernetes.io/managed-by: Helm
+    name: cluster-compliance
    webhooks:
-     - name: deployment.mutation.svc
-       clientConfig:
-         service:
-           namespace: kube-system
-           name: webhook-server
-           path: /validate
-           port: 443
-         caBundle:
-       rules:
-         - operations:
-             - CREATE
-             - DELETE
-             - UPDATE
-           apiGroups:
-             - apps
-             - batch
-           apiVersions:
-             - v1
-           resources:
-             - pods
-             - deployments
-             - replicasets
-             - jobs
-             - statefulsets
-           scope: Namespaced
-       failurePolicy: Fail
-       matchPolicy: Equivalent
-       sideEffects: None
-       timeoutSeconds: 5
-       admissionReviewVersions:
-         - v1
-         - v1beta1
+    - name: cluster.mutation.svc
+      clientConfig:
+       service:
+        namespace: kube-system
+        name: webhook-server
+        path: /validate
+        port: 443
+      rules:
+       - operations:
+          - CREATE
+          - DELETE
+          - UPDATE
+         apiGroups:
+          - apps
+          - batch
+          - rbac.authorization.k8s.io
+         apiVersions:
+          - v1
+         resources:
+          - pods
+          - deployments
+          - replicasets
+          - jobs
+          - statefulsets
+         scope: Namespaced
+       - operations:
+          - CREATE
+          - DELETE
+          - UPDATE
+         apiGroups:
+          - rbac.authorization.k8s.io
+         apiVersions:
+          - v1
+         resources:
+          - roles
+          - clusterroles
+          - rolebindings
+          - serviceaccounts
+         scope: '*'
+      failurePolicy: Fail
+      matchPolicy: Equivalent
+      namespaceSelector: {}
+      objectSelector: {}
+      sideEffects: None
+      timeoutSeconds: 5
+      admissionReviewVersions:
+       - v1
+       - v1beta1
+
 
 ```
 
@@ -164,16 +179,22 @@ These operators will sync the approved spec from the main/release branch and wil
 ### Pros
 
  workload cluster will always have the approved resources.
- no additional Webhook overhead in the workload cluster.
+
+ no additional webhook overhead in the workload cluster.
+
  we don't need to manage resource management controllers in the workload cluster.
- restricted mutation access to the cluster.
+
+ restricted mutation access to the workload cluster.
+
  workload cluster's don't have to maintain the audit history.
- GitHub will easily help to manage the versioning and change log of the reosurces.
+
+ GitHub will easily help to manage the versioning and change log of the resources.
  
 
 ### Cons
 
   A management plane need to be introduced which might add additional infra cost and maintenance.
+
   If number of workload clusters are more then the management plane need to scaled horizontally.
 
 
